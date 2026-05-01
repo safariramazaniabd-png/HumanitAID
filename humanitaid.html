@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HumanitAID — Ensemble, sauvons des vies en RDC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Crimson+Pro:wght@300;400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --rouge: #C0392B;
+  --rouge-vif: #E74C3C;
+  --or: #D4A843;
+  --or-clair: #F0C060;
+  --noir: #0D0D0D;
+  --noir-doux: #1A1A1A;
+  --gris-fonce: #2C2C2C;
+  --gris: #4A4A4A;
+  --gris-clair: #8A8A8A;
+  --creme: #F5EDD8;
+  --blanc: #FAFAF5;
+  --vert: #27AE60;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--noir);
+  color: var(--blanc);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════
+   BANDEAU DÉFILANT
+═══════════════════════════════════════ */
+.ticker-bar {
+  background: var(--rouge);
+  padding: 10px 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1000;
+  border-bottom: 2px solid var(--or);
+}
+.ticker-track {
+  display: flex;
+  animation: ticker 55s linear infinite;
+  white-space: nowrap;
+}
+.ticker-track:hover { animation-play-state: paused; }
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 50px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-transform: uppercase;
+}
+.ticker-item .dot { color: var(--or-clair); font-size: 18px; }
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ═══════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════ */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: rgba(13,13,13,0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(212,168,67,0.25);
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+}
+.nav-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.nav-logo span { color: var(--rouge-vif); }
+.nav-logo em { color: var(--or); font-style: italic; }
+.nav-links {
+  display: flex;
+  gap: 30px;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--gris-clair);
+  text-decoration: none;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: color 0.3s;
+}
+.nav-links a:hover { color: var(--or); }
+.nav-cta {
+  background: var(--rouge);
+  color: #fff !important;
+  padding: 8px 20px;
+  border-radius: 2px;
+  transition: background 0.3s !important;
+}
+.nav-cta:hover { background: var(--rouge-vif) !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════
+   HERO DIAPORAMA
+═══════════════════════════════════════ */
+.hero {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+  background-size: cover;
+  background-position: center;
+}
+.hero-slide.active { opacity: 1; }
+.hero-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.2) 0%,
+    rgba(0,0,0,0.1) 40%,
+    rgba(0,0,0,0.75) 80%,
+    rgba(0,0,0,0.95) 100%
+  );
+}
+
+/* Gradient backgrounds representing humanitarian themes */
+.slide-1 { background: linear-gradient(135deg, #2c1810 0%, #5c3420 30%, #8b4513 60%, #c0392b 100%); }
+.slide-2 { background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 40%, #2980b9 80%, #1abc9c 100%); }
+.slide-3 { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%); }
+.slide-4 { background: linear-gradient(135deg, #1b2838 0%, #2d5016 40%, #3d7a23 70%, #d4a843 100%); }
+
+.slide-visual {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 200px;
+  opacity: 0.12;
+  z-index: 0;
+}
+
+.hero-content {
+  position: absolute;
+  bottom: 80px;
+  left: 60px;
+  right: 60px;
+  z-index: 10;
+  max-width: 780px;
+}
+.hero-badge {
+  display: inline-block;
+  background: var(--rouge);
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  margin-bottom: 20px;
+}
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(42px, 6vw, 88px);
+  font-weight: 900;
+  line-height: 1.0;
+  margin-bottom: 20px;
+  color: #fff;
+}
+.hero-title .accent { color: var(--or); font-style: italic; }
+.hero-caption {
+  font-size: 20px;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 35px;
+  max-width: 560px;
+  font-style: italic;
+  border-left: 3px solid var(--or);
+  padding-left: 18px;
+}
+.hero-btns { display: flex; gap: 16px; flex-wrap: wrap; }
+.btn-primary {
+  background: var(--rouge);
+  color: #fff;
+  padding: 16px 36px;
+  border: none;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s;
+}
+.btn-primary:hover { background: var(--rouge-vif); transform: translateY(-2px); }
+.btn-outline {
+  background: transparent;
+  color: var(--or);
+  padding: 16px 36px;
+  border: 2px solid var(--or);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s;
+}
+.btn-outline:hover { background: var(--or); color: var(--noir); }
+
+.hero-dots {
+  position: absolute;
+  bottom: 30px;
+  right: 60px;
+  z-index: 10;
+  display: flex;
+  gap: 10px;
+}
+.hero-dot {
+  width: 8px; height: 8px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.hero-dot.active { background: var(--or); transform: scale(1.4); }
+
+.hero-counter {
+  position: absolute;
+  top: 30px;
+  right: 60px;
+  z-index: 10;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.1em;
+}
+
+/* ═══════════════════════════════════════
+   STATS RAPIDES
+═══════════════════════════════════════ */
+.stats-strip {
+  background: var(--noir-doux);
+  border-top: 1px solid rgba(212,168,67,0.2);
+  border-bottom: 1px solid rgba(212,168,67,0.2);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.stat-item {
+  padding: 40px 30px;
+  text-align: center;
+  border-right: 1px solid rgba(212,168,67,0.15);
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  font-weight: 900;
+  color: var(--or);
+  display: block;
+}
+.stat-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gris-clair);
+  margin-top: 6px;
+}
+
+/* ═══════════════════════════════════════
+   SECTIONS COMMUNES
+═══════════════════════════════════════ */
+section { padding: 100px 60px; }
+.section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--rouge-vif);
+  margin-bottom: 14px;
+}
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+.section-title em { color: var(--or); font-style: italic; }
+.section-sub {
+  font-size: 19px;
+  color: var(--gris-clair);
+  max-width: 600px;
+  margin-bottom: 60px;
+}
+
+/* ═══════════════════════════════════════
+   BARRES DE PROGRESSION
+═══════════════════════════════════════ */
+#collectes { background: var(--noir-doux); }
+.progress-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+}
+.progress-card {
+  background: var(--gris-fonce);
+  border: 1px solid rgba(212,168,67,0.1);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.progress-card:hover { border-color: rgba(212,168,67,0.4); transform: translateY(-4px); }
+.progress-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: var(--or);
+}
+.progress-card:nth-child(1)::before { background: #E74C3C; }
+.progress-card:nth-child(2)::before { background: #3498DB; }
+.progress-card:nth-child(3)::before { background: #9B59B6; }
+.progress-card:nth-child(4)::before { background: var(--or); }
+.progress-card:nth-child(5)::before { background: #27AE60; }
+
+.progress-card-full { grid-column: 1 / -1; }
+
+.card-icon { font-size: 36px; margin-bottom: 14px; }
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.card-desc { font-size: 15px; color: var(--gris-clair); margin-bottom: 20px; line-height: 1.5; }
+.amounts {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.amount-raised {
+  font-family: 'Space Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--or);
+}
+.amount-goal {
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  color: var(--gris-clair);
+  align-self: flex-end;
+}
+.bar-track {
+  background: rgba(255,255,255,0.08);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  width: 0;
+  transition: width 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bar-fill-1 { background: linear-gradient(90deg, #C0392B, #E74C3C); }
+.bar-fill-2 { background: linear-gradient(90deg, #2980B9, #3498DB); }
+.bar-fill-3 { background: linear-gradient(90deg, #7D3C98, #9B59B6); }
+.bar-fill-4 { background: linear-gradient(90deg, #B7860A, #D4A843); }
+.bar-fill-5 { background: linear-gradient(90deg, #1E8449, #27AE60); }
+
+.bar-stats {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--gris-clair);
+}
+.pct { color: var(--blanc); font-weight: 700; }
+
+/* ═══════════════════════════════════════
+   CAUSES VISUELLES
+═══════════════════════════════════════ */
+#causes { background: var(--noir); }
+.causes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+.cause-card {
+  position: relative;
+  height: 420px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.cause-card:nth-child(1) { grid-column: span 2; }
+.cause-bg {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cause-card:hover .cause-bg { transform: scale(1.06); }
+.cause-bg-1 { background: linear-gradient(135deg, #1a0a0a 0%, #4a1010 50%, #8b2020 100%); }
+.cause-bg-2 { background: linear-gradient(135deg, #0a1a2a 0%, #0f3460 50%, #1a6aa0 100%); }
+.cause-bg-3 { background: linear-gradient(135deg, #1a0a2a 0%, #4a1080 50%, #7b2fc0 100%); }
+.cause-bg-4 { background: linear-gradient(135deg, #1a1000 0%, #4a3000 50%, #c07800 100%); }
+.cause-bg-5 { background: linear-gradient(135deg, #001a10 0%, #004a20 50%, #006830 100%); }
+.cause-emoji {
+  font-size: 120px;
+  opacity: 0.15;
+  position: absolute;
+  right: -10px;
+  bottom: -10px;
+}
+.cause-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 30px;
+  transition: all 0.4s;
+}
+.cause-tag {
+  display: inline-block;
+  background: var(--rouge);
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  margin-bottom: 10px;
+  width: fit-content;
+}
+.cause-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.cause-desc {
+  font-size: 15px;
+  color: rgba(255,255,255,0.7);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.4s;
+  opacity: 0;
+  line-height: 1.5;
+}
+.cause-card:hover .cause-desc { max-height: 100px; opacity: 1; }
+.cause-link {
+  color: var(--or);
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 14px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.4s 0.1s;
+  text-decoration: none;
+  display: block;
+}
+.cause-card:hover .cause-link { opacity: 1; transform: translateY(0); }
+
+/* ═══════════════════════════════════════
+   TÉMOIGNAGES
+═══════════════════════════════════════ */
+#temoignages {
+  background: var(--noir-doux);
+  position: relative;
+}
+#temoignages::before {
+  content: '"';
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  font-family: 'Playfair Display', serif;
+  font-size: 300px;
+  color: rgba(212,168,67,0.05);
+  line-height: 1;
+  pointer-events: none;
+}
+.temoignages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.temoignage-card {
+  background: var(--gris-fonce);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 30px;
+  position: relative;
+  transition: transform 0.3s, border-color 0.3s;
+}
+.temoignage-card:hover { transform: translateY(-6px); border-color: rgba(212,168,67,0.3); }
+.temoignage-card::before {
+  content: '"';
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-family: 'Playfair Display', serif;
+  font-size: 60px;
+  color: rgba(212,168,67,0.2);
+  line-height: 1;
+}
+.temoignage-cat {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+.cat-deplaces { background: rgba(192,57,43,0.25); color: #E74C3C; }
+.cat-orphelins { background: rgba(52,152,219,0.25); color: #5DADE2; }
+.cat-veuves { background: rgba(155,89,182,0.25); color: #BB8FCE; }
+.cat-victimes { background: rgba(212,168,67,0.25); color: #F0C060; }
+.cat-handicapes { background: rgba(39,174,96,0.25); color: #58D68D; }
+
+.temoignage-text {
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.85);
+  font-style: italic;
+  margin-bottom: 24px;
+  min-height: 100px;
+}
+.temoignage-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.author-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  background: var(--gris);
+}
+.author-name {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+}
+.author-loc {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--gris-clair);
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════
+   ACTUALITÉS
+═══════════════════════════════════════ */
+#actualites { background: var(--noir); }
+.news-layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 30px;
+}
+.news-main {
+  background: var(--gris-fonce);
+  border: 1px solid rgba(212,168,67,0.1);
+  overflow: hidden;
+  transition: border-color 0.3s;
+  cursor: pointer;
+}
+.news-main:hover { border-color: rgba(212,168,67,0.4); }
+.news-main-img {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  background: linear-gradient(135deg, #1a0808 0%, #5c1a1a 50%, #c0392b 100%);
+  position: relative;
+  overflow: hidden;
+}
+.news-main-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.5) 100%);
+}
+.news-main-body { padding: 30px; }
+.news-date {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--or);
+  margin-bottom: 10px;
+}
+.news-main-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 14px;
+}
+.news-main-excerpt { font-size: 16px; color: var(--gris-clair); line-height: 1.6; }
+
+.news-sidebar { display: flex; flex-direction: column; gap: 16px; }
+.news-card {
+  background: var(--gris-fonce);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.news-card:hover { border-color: rgba(212,168,67,0.3); transform: translateX(4px); }
+.news-card-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  background: var(--gris);
+  flex-shrink: 0;
+}
+.news-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.news-card-date {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--or);
+  letter-spacing: 0.08em;
+}
+
+/* ═══════════════════════════════════════
+   CITATIONS
+═══════════════════════════════════════ */
+.citations {
+  background: var(--rouge);
+  padding: 60px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.citations::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 30px,
+    rgba(0,0,0,0.05) 30px,
+    rgba(0,0,0,0.05) 31px
+  );
+}
+.citations-wrap { position: relative; z-index: 1; }
+.citation-text {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(22px, 3vw, 38px);
+  font-style: italic;
+  line-height: 1.4;
+  color: #fff;
+  max-width: 900px;
+  margin: 0 auto 20px;
+  transition: opacity 0.6s ease;
+}
+.citation-author {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+  transition: opacity 0.6s ease;
+}
+.citation-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+.citation-dot {
+  width: 6px;
+  height: 6px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.citation-dot.active { background: #fff; transform: scale(1.5); }
+
+/* ═══════════════════════════════════════
+   MODULE DE DON
+═══════════════════════════════════════ */
+#donner {
+  background: var(--noir-doux);
+  position: relative;
+}
+#donner::before {
+  content: '♥';
+  position: absolute;
+  right: 80px;
+  top: 60px;
+  font-size: 400px;
+  color: rgba(192,57,43,0.04);
+  line-height: 1;
+  pointer-events: none;
+}
+.don-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 60px;
+  align-items: start;
+}
+.don-left { position: relative; z-index: 1; }
+.don-features { margin-top: 40px; display: flex; flex-direction: column; gap: 20px; }
+.don-feature {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.don-feature-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(212,168,67,0.1);
+  border: 1px solid rgba(212,168,67,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.don-feature-title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--or);
+  margin-bottom: 4px;
+}
+.don-feature-desc { font-size: 14px; color: var(--gris-clair); line-height: 1.5; }
+
+.don-form {
+  background: var(--gris-fonce);
+  border: 1px solid rgba(212,168,67,0.2);
+  padding: 40px;
+  position: relative;
+  z-index: 1;
+}
+.don-form-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.form-step-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--or);
+  margin-bottom: 12px;
+  display: block;
+}
+.amount-btns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.amount-btn {
+  padding: 14px;
+  background: var(--gris);
+  border: 2px solid transparent;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  text-align: center;
+}
+.amount-btn:hover, .amount-btn.selected {
+  border-color: var(--or);
+  background: rgba(212,168,67,0.12);
+  color: var(--or);
+}
+.custom-amount {
+  width: 100%;
+  background: var(--gris);
+  border: 2px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 14px 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  outline: none;
+  margin-bottom: 24px;
+  transition: border-color 0.3s;
+}
+.custom-amount:focus { border-color: var(--or); }
+.custom-amount::placeholder { color: var(--gris-clair); font-size: 13px; }
+
+.cause-select {
+  width: 100%;
+  background: var(--gris);
+  border: 2px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 14px 16px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 16px;
+  outline: none;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: border-color 0.3s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23D4A843' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+.cause-select:focus { border-color: var(--or); }
+.cause-select option { background: var(--gris-fonce); }
+
+.payment-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.payment-tab {
+  flex: 1;
+  padding: 12px 8px;
+  background: transparent;
+  border: none;
+  color: var(--gris-clair);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
+}
+.payment-tab:last-child { border-right: none; }
+.payment-tab.active { background: var(--rouge); color: #fff; }
+.payment-tab:hover:not(.active) { background: rgba(255,255,255,0.05); color: #fff; }
+
+.payment-panel { display: none; margin-bottom: 24px; }
+.payment-panel.active { display: block; }
+
+.form-input {
+  width: 100%;
+  background: var(--gris);
+  border: 2px solid rgba(255,255,255,0.08);
+  color: #fff;
+  padding: 12px 16px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 16px;
+  outline: none;
+  margin-bottom: 12px;
+  transition: border-color 0.3s;
+}
+.form-input:focus { border-color: rgba(212,168,67,0.6); }
+.form-input::placeholder { color: var(--gris-clair); font-size: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.mobile-providers {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.provider-btn {
+  padding: 12px;
+  border: 2px solid rgba(255,255,255,0.1);
+  background: var(--gris);
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s;
+}
+.provider-btn.selected, .provider-btn:hover {
+  border-color: var(--or);
+  background: rgba(212,168,67,0.1);
+  color: var(--or);
+}
+
+.ssl-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(39,174,96,0.1);
+  border: 1px solid rgba(39,174,96,0.3);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #58D68D;
+  text-transform: uppercase;
+}
+.ssl-icon { font-size: 16px; }
+
+.btn-don {
+  width: 100%;
+  padding: 18px;
+  background: var(--rouge);
+  border: none;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-don::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; right: 100%; bottom: 0;
+  background: rgba(255,255,255,0.1);
+  transition: all 0.5s;
+}
+.btn-don:hover::before { left: 0; right: 0; }
+.btn-don:hover { background: var(--rouge-vif); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(192,57,43,0.4); }
+
+/* ═══════════════════════════════════════
+   MODAL CONFIRMATION
+═══════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+  backdrop-filter: blur(8px);
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--gris-fonce);
+  border: 1px solid rgba(212,168,67,0.3);
+  max-width: 520px;
+  width: 90%;
+  padding: 60px 50px;
+  text-align: center;
+  transform: translateY(30px) scale(0.95);
+  transition: transform 0.4s;
+  position: relative;
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+.modal-icon { font-size: 70px; display: block; margin-bottom: 20px; }
+.modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--or);
+  margin-bottom: 14px;
+}
+.modal-text { font-size: 18px; color: var(--gris-clair); line-height: 1.6; margin-bottom: 30px; }
+.modal-amount {
+  font-family: 'Space Mono', monospace;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--rouge-vif);
+  display: block;
+  margin-bottom: 8px;
+}
+.modal-cause { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--or); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 30px; display: block; }
+.modal-ref { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--gris-clair); letter-spacing: 0.1em; margin-bottom: 30px; }
+.modal-close {
+  background: var(--rouge);
+  color: #fff;
+  border: none;
+  padding: 14px 40px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.modal-close:hover { background: var(--rouge-vif); }
+.modal-x {
+  position: absolute;
+  top: 16px; right: 20px;
+  background: none;
+  border: none;
+  color: var(--gris-clair);
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.3s;
+}
+.modal-x:hover { color: #fff; }
+
+/* ═══════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════ */
+footer {
+  background: var(--noir);
+  border-top: 1px solid rgba(212,168,67,0.15);
+  padding: 60px 60px 30px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 50px;
+  margin-bottom: 50px;
+}
+.footer-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 16px;
+}
+.footer-logo span { color: var(--rouge-vif); }
+.footer-logo em { color: var(--or); font-style: italic; }
+.footer-desc { font-size: 15px; color: var(--gris-clair); line-height: 1.7; margin-bottom: 20px; }
+.footer-socials { display: flex; gap: 12px; }
+.social-btn {
+  width: 40px; height: 40px;
+  background: var(--gris-fonce);
+  border: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  color: #fff;
+}
+.social-btn:hover { background: var(--rouge); border-color: var(--rouge); }
+.footer-col-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--or);
+  margin-bottom: 20px;
+}
+.footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-links a {
+  color: var(--gris-clair);
+  text-decoration: none;
+  font-size: 15px;
+  transition: color 0.3s;
+}
+.footer-links a:hover { color: #fff; }
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--gris-clair);
+  letter-spacing: 0.08em;
+}
+.footer-bottom-links { display: flex; gap: 24px; }
+.footer-bottom-links a { color: var(--gris-clair); text-decoration: none; transition: color 0.3s; }
+.footer-bottom-links a:hover { color: var(--or); }
+
+/* ═══════════════════════════════════════
+   ANIMATIONS ENTRÉE
+═══════════════════════════════════════ */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.fade-up.visible { opacity: 1; transform: translateY(0); }
+.fade-up-delay-1 { transition-delay: 0.1s; }
+.fade-up-delay-2 { transition-delay: 0.2s; }
+.fade-up-delay-3 { transition-delay: 0.3s; }
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media (max-width: 900px) {
+  section { padding: 70px 24px; }
+  nav { padding: 0 24px; }
+  .nav-links { display: none; }
+  .hero-content { left: 24px; right: 24px; bottom: 60px; }
+  .stats-strip { grid-template-columns: repeat(2, 1fr); }
+  .progress-grid { grid-template-columns: 1fr; }
+  .causes-grid { grid-template-columns: 1fr; }
+  .cause-card:nth-child(1) { grid-column: span 1; }
+  .temoignages-grid { grid-template-columns: 1fr; }
+  .news-layout { grid-template-columns: 1fr; }
+  .don-layout { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  footer { padding: 50px 24px 24px; }
+  .footer-bottom { flex-direction: column; gap: 14px; text-align: center; }
+  .amount-btns { grid-template-columns: repeat(2, 1fr); }
+  #donner::before { display: none; }
+}
+
+/* Scroll snap for hero */
+.hero { scroll-snap-align: start; }
+
+/* Urgency pulse */
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: pulse-red 1.5s ease-in-out infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ BANDEAU DÉFILANT ═══ -->
+<div class="ticker-bar" role="marquee" aria-label="Alertes humanitaires">
+  <div class="ticker-track" id="ticker">
+    <span class="ticker-item"><span class="live-dot"></span><span class="dot">🔴</span> ALERTE · Plus de 7 millions de déplacés en RDC — situation critique à Goma et Butembo</span>
+    <span class="ticker-item"><span class="dot">⚠️</span> URGENT · 2 millions d'enfants orphelins en zones de conflit — votre don sauve une vie aujourd'hui</span>
+    <span class="ticker-item"><span class="dot">🆘</span> SOS · Veuves et femmes survivantes sans ressources à Beni, Minembwe, Uvira — agissez maintenant</span>
+    <span class="ticker-item"><span class="dot">🔴</span> CRITIQUE · 180 000 victimes de violences documentées depuis janvier 2025 — l'urgence est réelle</span>
+    <span class="ticker-item"><span class="dot">💛</span> APPEL · Personnes handicapées sans soins en zones de guerre — chaque dollar compte pour leur survie</span>
+    <span class="ticker-item"><span class="dot">🌍</span> "Tant que tu as les moyens d'aider, tu as le devoir de le faire" — Rejoignez les donateurs aujourd'hui</span>
+    <span class="ticker-item"><span class="dot">❤️</span> "La générosité n'a pas de frontières — l'humanité non plus" — Faites un don maintenant</span>
+    <!-- Duplicate for seamless loop -->
+    <span class="ticker-item"><span class="live-dot"></span><span class="dot">🔴</span> ALERTE · Plus de 7 millions de déplacés en RDC — situation critique à Goma et Butembo</span>
+    <span class="ticker-item"><span class="dot">⚠️</span> URGENT · 2 millions d'enfants orphelins en zones de conflit — votre don sauve une vie aujourd'hui</span>
+    <span class="ticker-item"><span class="dot">🆘</span> SOS · Veuves et femmes survivantes sans ressources à Beni, Minembwe, Uvira — agissez maintenant</span>
+    <span class="ticker-item"><span class="dot">🔴</span> CRITIQUE · 180 000 victimes de violences documentées depuis janvier 2025 — l'urgence est réelle</span>
+    <span class="ticker-item"><span class="dot">💛</span> APPEL · Personnes handicapées sans soins en zones de guerre — chaque dollar compte pour leur survie</span>
+    <span class="ticker-item"><span class="dot">🌍</span> "Tant que tu as les moyens d'aider, tu as le devoir de le faire" — Rejoignez les donateurs aujourd'hui</span>
+    <span class="ticker-item"><span class="dot">❤️</span> "La générosité n'a pas de frontières — l'humanité non plus" — Faites un don maintenant</span>
+  </div>
+</div>
+
+<!-- ═══ NAVIGATION ═══ -->
+<nav role="navigation">
+  <div class="nav-logo">Humanit<span>A</span><em>ID</em></div>
+  <ul class="nav-links">
+    <li><a href="#collectes">Collectes</a></li>
+    <li><a href="#causes">Causes</a></li>
+    <li><a href="#temoignages">Témoignages</a></li>
+    <li><a href="#actualites">Actualités</a></li>
+    <li><a href="#donner" class="nav-cta">❤ Donner</a></li>
+  </ul>
+</nav>
+
+<!-- ═══ HERO DIAPORAMA ═══ -->
+<section class="hero" id="accueil" aria-label="Diaporama">
+  <div class="hero-counter"><span id="slide-current">1</span> / 4</div>
+
+  <div class="hero-slide slide-1 active" aria-hidden="true">
+    <div class="slide-visual">🏕️</div>
+  </div>
+  <div class="hero-slide slide-2" aria-hidden="true">
+    <div class="slide-visual">👶</div>
+  </div>
+  <div class="hero-slide slide-3" aria-hidden="true">
+    <div class="slide-visual">🕊️</div>
+  </div>
+  <div class="hero-slide slide-4" aria-hidden="true">
+    <div class="slide-visual">🤝</div>
+  </div>
+
+  <div class="hero-content">
+    <span class="hero-badge">🔴 Crise humanitaire active — Est de la RDC</span>
+    <h1 class="hero-title" id="hero-title">Des millions de vies<br>attendent votre <span class="accent">générosité</span></h1>
+    <p class="hero-caption" id="hero-caption">« Notre camp de Kanyabayonga abrite 12 000 personnes. Les enfants mangent une fois par jour. S'il vous plaît, n'oubliez pas notre existence. »<br>— Marie-Claire, déplacée, Nord-Kivu</p>
+    <div class="hero-btns">
+      <a href="#donner" class="btn-primary">💳 Faire un don maintenant</a>
+      <a href="#causes" class="btn-outline">Découvrir les causes →</a>
+    </div>
+  </div>
+
+  <div class="hero-dots" role="tablist">
+    <div class="hero-dot active" onclick="goToSlide(0)" role="tab" aria-label="Slide 1"></div>
+    <div class="hero-dot" onclick="goToSlide(1)" role="tab" aria-label="Slide 2"></div>
+    <div class="hero-dot" onclick="goToSlide(2)" role="tab" aria-label="Slide 3"></div>
+    <div class="hero-dot" onclick="goToSlide(3)" role="tab" aria-label="Slide 4"></div>
+  </div>
+</section>
+
+<!-- ═══ STATS RAPIDES ═══ -->
+<div class="stats-strip" role="region" aria-label="Chiffres clés">
+  <div class="stat-item fade-up">
+    <span class="stat-num" data-count="7200000">0</span>
+    <span class="stat-label">Déplacés internes en RDC</span>
+  </div>
+  <div class="stat-item fade-up fade-up-delay-1">
+    <span class="stat-num" data-count="2100000">0</span>
+    <span class="stat-label">Enfants orphelins en zones de guerre</span>
+  </div>
+  <div class="stat-item fade-up fade-up-delay-2">
+    <span class="stat-num" data-prefix="$" data-count="847320">0</span>
+    <span class="stat-label">Collecté en 2025</span>
+  </div>
+  <div class="stat-item fade-up fade-up-delay-3">
+    <span class="stat-num" data-count="14280">0</span>
+    <span class="stat-label">Donateurs à travers le monde</span>
+  </div>
+</div>
+
+<!-- ═══ BARRES DE PROGRESSION ═══ -->
+<section id="collectes" aria-labelledby="collectes-title">
+  <p class="section-label">État des collectes</p>
+  <h2 class="section-title" id="collectes-title">Votre argent à l'<em>œuvre</em></h2>
+  <p class="section-sub">Transparence totale sur l'avancement de chaque collecte. Chaque dollar est tracé et rapporté.</p>
+
+  <div class="progress-grid">
+    <div class="progress-card fade-up">
+      <div class="card-icon">🏕️</div>
+      <div class="card-title">Déplacés & Réfugiés de guerre</div>
+      <div class="card-desc">Vivres, abris d'urgence, eau potable et soins médicaux pour les millions de déplacés du Nord et Sud-Kivu, Ituri et Tanganyika.</div>
+      <div class="amounts">
+        <span class="amount-raised">$312 480</span>
+        <span class="amount-goal">Objectif : $500 000</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill bar-fill-1" data-target="62"></div></div>
+      <div class="bar-stats"><span class="pct">62%</span><span>1 847 donateurs</span><span>⏰ 42 jours restants</span></div>
+    </div>
+
+    <div class="progress-card fade-up fade-up-delay-1">
+      <div class="card-icon">👶</div>
+      <div class="card-title">Enfants Orphelins en zones de conflit</div>
+      <div class="card-desc">Nutrition d'urgence, accès à l'éducation, soutien psychologique et familles d'accueil pour les enfants sans parents.</div>
+      <div class="amounts">
+        <span class="amount-raised">$198 750</span>
+        <span class="amount-goal">Objectif : $350 000</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill bar-fill-2" data-target="57"></div></div>
+      <div class="bar-stats"><span class="pct">57%</span><span>2 104 donateurs</span><span>⏰ 58 jours restants</span></div>
+    </div>
+
+    <div class="progress-card fade-up">
+      <div class="card-icon">🕊️</div>
+      <div class="card-title">Veuves & Femmes survivantes</div>
+      <div class="card-desc">Accompagnement médical, juridique, psychologique et économique pour les femmes veuves et survivantes de violences sexuelles.</div>
+      <div class="amounts">
+        <span class="amount-raised">$156 900</span>
+        <span class="amount-goal">Objectif : $280 000</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill bar-fill-3" data-target="56"></div></div>
+      <div class="bar-stats"><span class="pct">56%</span><span>983 donateurs</span><span>⏰ 35 jours restants</span></div>
+    </div>
+
+    <div class="progress-card fade-up fade-up-delay-1">
+      <div class="card-icon">🩹</div>
+      <div class="card-title">Victimes de violences armées</div>
+      <div class="card-desc">Soins chirurgicaux d'urgence, réhabilitation physique, soutien aux familles endeuillées et aide au retour à la vie normale.</div>
+      <div class="amounts">
+        <span class="amount-raised">$89 200</span>
+        <span class="amount-goal">Objectif : $200 000</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill bar-fill-4" data-target="45"></div></div>
+      <div class="bar-stats"><span class="pct">45%</span><span>741 donateurs</span><span>⏰ 70 jours restants</span></div>
+    </div>
+
+    <div class="progress-card progress-card-full fade-up">
+      <div class="card-icon">♿</div>
+      <div class="card-title">Personnes Handicapées en zones de guerre</div>
+      <div class="card-desc">Prothèses, fauteuils roulants, soins spécialisés et inclusion sociale pour les personnes handicapées abandonnées dans les zones de conflit — les plus vulnérables parmi les vulnérables.</div>
+      <div class="amounts">
+        <span class="amount-raised">$89 990</span>
+        <span class="amount-goal">Objectif : $150 000</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill bar-fill-5" data-target="60"></div></div>
+      <div class="bar-stats"><span class="pct">60%</span><span>605 donateurs</span><span>⏰ 90 jours restants</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CAUSES VISUELLES ═══ -->
+<section id="causes" aria-labelledby="causes-title">
+  <p class="section-label">Nos bénéficiaires</p>
+  <h2 class="section-title" id="causes-title">Cinq causes, <em>une urgence</em></h2>
+  <p class="section-sub">Chaque visage derrière ces causes mérite votre attention. Survolez pour en savoir plus.</p>
+
+  <div class="causes-grid">
+    <div class="cause-card">
+      <div class="cause-bg cause-bg-1">
+        <div class="cause-emoji">🏕️</div>
+      </div>
+      <div class="cause-overlay">
+        <span class="cause-tag">Priorité 1</span>
+        <div class="cause-name">Déplacés & Réfugiés</div>
+        <div class="cause-desc">7,2 millions de Congolais ont fui leurs foyers à cause des violences armées. Ils vivent dans des camps de fortune sans eau, nourriture ni soins.</div>
+        <a href="#donner" class="cause-link">Aider maintenant →</a>
+      </div>
+    </div>
+
+    <div class="cause-card">
+      <div class="cause-bg cause-bg-2">
+        <div class="cause-emoji">👶</div>
+      </div>
+      <div class="cause-overlay">
+        <span class="cause-tag">Priorité 2</span>
+        <div class="cause-name">Enfants Orphelins</div>
+        <div class="cause-desc">Des milliers d'enfants ont perdu leurs parents dans les conflits. Sans famille ni tuteur, ils sont livrés à eux-mêmes dans des zones de guerre actives.</div>
+        <a href="#donner" class="cause-link">Protéger un enfant →</a>
+      </div>
+    </div>
+
+    <div class="cause-card">
+      <div class="cause-bg cause-bg-3">
+        <div class="cause-emoji">🕊️</div>
+      </div>
+      <div class="cause-overlay">
+        <span class="cause-tag">Priorité 3</span>
+        <div class="cause-name">Veuves & Femmes</div>
+        <div class="cause-desc">Veuves de guerre, survivantes de violences sexuelles — ces femmes portent des blessures invisibles et ont besoin de soins, de justice et de dignité.</div>
+        <a href="#donner" class="cause-link">Soutenir les femmes →</a>
+      </div>
+    </div>
+
+    <div class="cause-card">
+      <div class="cause-bg cause-bg-4">
+        <div class="cause-emoji">🩹</div>
+      </div>
+      <div class="cause-overlay">
+        <span class="cause-tag">Priorité 4</span>
+        <div class="cause-name">Victimes de violences</div>
+        <div class="cause-desc">Blessés par balles, mines ou machettes, ces survivants ont besoin de chirurgie d'urgence et d'une réhabilitation longue que leurs familles ne peuvent pas financer.</div>
+        <a href="#donner" class="cause-link">Financer les soins →</a>
+      </div>
+    </div>
+
+    <div class="cause-card">
+      <div class="cause-bg cause-bg-5">
+        <div class="cause-emoji">♿</div>
+      </div>
+      <div class="cause-overlay">
+        <span class="cause-tag">Priorité 5</span>
+        <div class="cause-name">Personnes Handicapées</div>
+        <div class="cause-desc">En zones de guerre, le handicap devient une condamnation à mort. Privés de mobilité, de soins et d'accès aux aides, ils sont les grands oubliés des crises humanitaires.</div>
+        <a href="#donner" class="cause-link">Ne pas les oublier →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TÉMOIGNAGES ═══ -->
+<section id="temoignages" aria-labelledby="temoignages-title">
+  <p class="section-label">Voix du terrain</p>
+  <h2 class="section-title" id="temoignages-title">Ils ont <em>survécu.</em><br>Ils témoignent.</h2>
+  <p class="section-sub">Ces histoires sont réelles. Ces personnes ont besoin de vous.</p>
+
+  <div class="temoignages-grid">
+    <div class="temoignage-card fade-up">
+      <span class="temoignage-cat cat-deplaces">🏕️ Déplacé</span>
+      <p class="temoignage-text">« J'ai marché 11 jours avec mes 4 enfants pour fuir les combats de Rutshuru. Mon mari a été tué devant nous. Aujourd'hui nous vivons sous une bâche dans le camp de Bulengo. Je n'ai plus rien, mais je garde espoir. »</p>
+      <div class="temoignage-author">
+        <div class="author-avatar">👩🏿</div>
+        <div>
+          <div class="author-name">Alphonsine M.</div>
+          <div class="author-loc">📍 Camp de Bulengo, Nord-Kivu · Fév. 2025</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="temoignage-card fade-up fade-up-delay-1">
+      <span class="temoignage-cat cat-orphelins">👶 Orphelin</span>
+      <p class="temoignage-text">« J'ai 9 ans. Mes parents sont morts quand les hommes armés ont attaqué notre village. Je vis avec ma grande sœur de 14 ans. On mange ce qu'on trouve. Mon rêve c'est de retourner à l'école. »</p>
+      <div class="temoignage-author">
+        <div class="author-avatar">👦🏿</div>
+        <div>
+          <div class="author-name">Joël K. (témoignage recueilli)</div>
+          <div class="author-loc">📍 Ituri · Mars 2025</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="temoignage-card fade-up fade-up-delay-2">
+      <span class="temoignage-cat cat-veuves">🕊️ Veuve</span>
+      <p class="temoignage-text">« Mon mari a été exécuté il y a 8 mois. J'ai trois enfants à nourrir. J'ai subi des violences inimaginables. Les organisations d'aide m'ont appris à respirer à nouveau. Mais j'ai besoin de soutien pour reconstruire ma vie. »</p>
+      <div class="temoignage-author">
+        <div class="author-avatar">👩🏿</div>
+        <div>
+          <div class="author-name">Espérance N.</div>
+          <div class="author-loc">📍 Minembwe, Sud-Kivu · Jan. 2025</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="temoignage-card fade-up">
+      <span class="temoignage-cat cat-victimes">🩹 Victime de violence</span>
+      <p class="temoignage-text">« Une balle perdue m'a traversé l'épaule lors d'une attaque. L'hôpital de Goma a pu m'opérer grâce aux fonds collectés ici. Sans cette aide, j'aurais perdu le bras. Aujourd'hui je peux de nouveau tenir mon enfant. »</p>
+      <div class="temoignage-author">
+        <div class="author-avatar">👨🏿</div>
+        <div>
+          <div class="author-name">Patient B.</div>
+          <div class="author-loc">📍 Hôpital de Goma · Déc. 2024</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="temoignage-card fade-up fade-up-delay-1">
+      <span class="temoignage-cat cat-handicapes">♿ Handicapé</span>
+      <p class="temoignage-text">« J'ai perdu mes deux jambes sur une mine antipersonnel en 2023. Pendant des mois, j'ai rampé pour me déplacer. Grâce aux donateurs de HumanitAID, j'ai reçu un fauteuil roulant. La dignité, ça n'a pas de prix. »</p>
+      <div class="temoignage-author">
+        <div class="author-avatar">👨🏿</div>
+        <div>
+          <div class="author-name">Théodore L.</div>
+          <div class="author-loc">📍 Beni, Nord-Kivu · Nov. 2024</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="temoignage-card fade-up fade-up-delay-2">
+      <span class="temoignage-cat cat-orphelins">👶 Orpheline</span>
+      <p class="temoignage-text">« Je m'appelle Grâce, j'ai 12 ans. Depuis que HumanitAID paie ma scolarité, je vais à l'école chaque matin. C'est la première fois depuis deux ans que j'ai quelque chose à attendre chaque jour. Merci de croire en moi. »</p>
+      <div class="temoignage-author">
+        <div class="author-avatar">👧🏿</div>
+        <div>
+          <div class="author-name">Grâce M. (famille d'accueil)</div>
+          <div class="author-loc">📍 Uvira, Sud-Kivu · Avr. 2025</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CITATIONS DÉFILANTES ═══ -->
+<div class="citations" role="region" aria-label="Citations inspirantes">
+  <div class="citations-wrap">
+    <p class="citation-text" id="citation-text">« Injustice anywhere is a threat to justice everywhere. »</p>
+    <p class="citation-author" id="citation-author">— Martin Luther King Jr.</p>
+    <div class="citation-dots" id="citation-dots">
+      <div class="citation-dot active"></div>
+      <div class="citation-dot"></div>
+      <div class="citation-dot"></div>
+      <div class="citation-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ACTUALITÉS ═══ -->
+<section id="actualites" aria-labelledby="actualites-title">
+  <p class="section-label">Terrain & Rapports</p>
+  <h2 class="section-title" id="actualites-title">L'actualité de la <em>crise</em></h2>
+  <p class="section-sub">Rester informé pour mieux agir. Nos équipes reportent depuis le terrain chaque semaine.</p>
+
+  <div class="news-layout">
+    <div class="news-main">
+      <div class="news-main-img"><span style="position:relative;z-index:1">🌍</span></div>
+      <div class="news-main-body">
+        <p class="news-date">📅 2 AVRIL 2025 · RAPPORT TERRAIN</p>
+        <h3 class="news-main-title">L'offensive du M23 aggrave la crise humanitaire : 400 000 nouveaux déplacés en 6 semaines dans le Nord-Kivu</h3>
+        <p class="news-main-excerpt">Les violences du groupe armé M23 et ses alliés ont provoqué une vague massive de déplacements depuis février 2025. Les camps de Bulengo, Lushagala et Kanyabayonga débordent. L'accès humanitaire est rendu quasi-impossible par les combats actifs. Nos équipes rapportent un état de malnutrition aiguë chez 1 enfant sur 3 dans les camps visités...</p>
+      </div>
+    </div>
+
+    <div class="news-sidebar">
+      <div class="news-card">
+        <div class="news-card-icon">♿</div>
+        <div>
+          <p class="news-card-date">📅 18 MARS 2025</p>
+          <p class="news-card-title">Distribution de 320 fauteuils roulants à Goma et Butembo</p>
+        </div>
+      </div>
+      <div class="news-card">
+        <div class="news-card-icon">👶</div>
+        <div>
+          <p class="news-card-date">📅 28 FÉV. 2025</p>
+          <p class="news-card-title">742 enfants orphelins inscrits dans nos programmes scolaires depuis janvier</p>
+        </div>
+      </div>
+      <div class="news-card">
+        <div class="news-card-icon">🕊️</div>
+        <div>
+          <p class="news-card-date">📅 12 JAN. 2025</p>
+          <p class="news-card-title">Centre d'accueil pour femmes survivantes ouvert à Uvira : 230 bénéficiaires</p>
+        </div>
+      </div>
+      <div class="news-card">
+        <div class="news-card-icon">🩺</div>
+        <div>
+          <p class="news-card-date">📅 5 DÉC. 2024</p>
+          <p class="news-card-title">Mission médicale : 1 200 consultations réalisées à Minembwe en zone isolée</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MODULE DE DON ═══ -->
+<section id="donner" aria-labelledby="donner-title">
+  <div class="don-layout">
+    <div class="don-left">
+      <p class="section-label">Agir maintenant</p>
+      <h2 class="section-title" id="donner-title">Votre don change<br>une <em>vie réelle</em></h2>
+      <p class="section-sub">100% des dons collectés sont reversés aux bénéficiaires. Nos frais de fonctionnement sont couverts séparément.</p>
+
+      <div class="don-features">
+        <div class="don-feature">
+          <div class="don-feature-icon">🛡️</div>
+          <div>
+            <div class="don-feature-title">Don 100% sécurisé</div>
+            <div class="don-feature-desc">Chiffrement SSL 256 bits. Vos données bancaires ne sont jamais stockées sur nos serveurs.</div>
+          </div>
+        </div>
+        <div class="don-feature">
+          <div class="don-feature-icon">📊</div>
+          <div>
+            <div class="don-feature-title">Transparence totale</div>
+            <div class="don-feature-desc">Rapport d'utilisation mensuel envoyé à chaque donateur. Traçabilité complète de chaque dollar.</div>
+          </div>
+        </div>
+        <div class="don-feature">
+          <div class="don-feature-icon">📧</div>
+          <div>
+            <div class="don-feature-title">Reçu fiscal immédiat</div>
+            <div class="don-feature-desc">Certificat de don envoyé par email dans les 5 minutes. Déductible selon votre pays de résidence.</div>
+          </div>
+        </div>
+        <div class="don-feature">
+          <div class="don-feature-icon">🔄</div>
+          <div>
+            <div class="don-feature-title">Don récurrent disponible</div>
+            <div class="don-feature-desc">Devenez partenaire mensuel et assurez un soutien continu. Annulation libre à tout moment.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="don-form" role="form" aria-label="Formulaire de don">
+      <h3 class="don-form-title">❤️ Faire un don sécurisé</h3>
+
+      <!-- MONTANT -->
+      <span class="form-step-label">1. Choisissez votre montant</span>
+      <div class="amount-btns">
+        <button class="amount-btn" onclick="selectAmount(10, this)">$10</button>
+        <button class="amount-btn" onclick="selectAmount(25, this)">$25</button>
+        <button class="amount-btn" onclick="selectAmount(50, this)">$50</button>
+        <button class="amount-btn selected" onclick="selectAmount(100, this)">$100</button>
+        <button class="amount-btn" onclick="selectAmount(250, this)">$250</button>
+        <button class="amount-btn" onclick="selectAmount(500, this)">$500</button>
+      </div>
+      <input type="number" class="custom-amount" id="customAmount" placeholder="Ou entrez un montant personnalisé (ex: 1000)" min="1" oninput="clearSelected()"/>
+
+      <!-- CAUSE -->
+      <span class="form-step-label">2. Choisissez la cause bénéficiaire</span>
+      <select class="cause-select" id="causeSelect" aria-label="Cause bénéficiaire">
+        <option value="">— Sélectionner une cause ou toutes les causes —</option>
+        <option value="deplaces">🏕️ Déplacés & Réfugiés de guerre</option>
+        <option value="orphelins">👶 Enfants Orphelins en zones de conflit</option>
+        <option value="veuves">🕊️ Veuves & Femmes survivantes de violences</option>
+        <option value="victimes">🩹 Victimes de violences armées</option>
+        <option value="handicapes">♿ Personnes Handicapées en zones de guerre</option>
+        <option value="toutes">❤️ Toutes les causes — Là où le besoin est le plus urgent</option>
+      </select>
+
+      <!-- MODE DE PAIEMENT -->
+      <span class="form-step-label">3. Mode de paiement</span>
+      <div class="payment-tabs" role="tablist">
+        <button class="payment-tab active" onclick="switchTab('carte', this)" role="tab">💳 Carte</button>
+        <button class="payment-tab" onclick="switchTab('mobile', this)" role="tab">📱 Mobile Money</button>
+        <button class="payment-tab" onclick="switchTab('virement', this)" role="tab">🏦 Virement</button>
+      </div>
+
+      <!-- Carte bancaire -->
+      <div class="payment-panel active" id="panel-carte">
+        <input type="text" class="form-input" placeholder="Nom sur la carte" maxlength="50"/>
+        <input type="text" class="form-input" placeholder="Numéro de carte — 0000 0000 0000 0000" maxlength="19"/>
+        <div class="form-row">
+          <input type="text" class="form-input" placeholder="MM / AA" maxlength="5"/>
+          <input type="text" class="form-input" placeholder="CVV" maxlength="4"/>
+        </div>
+        <input type="email" class="form-input" placeholder="Email pour le reçu fiscal"/>
+      </div>
+
+      <!-- Mobile Money -->
+      <div class="payment-panel" id="panel-mobile">
+        <div class="mobile-providers">
+          <button class="provider-btn" onclick="selectProvider(this)">📱 M-Pesa</button>
+          <button class="provider-btn" onclick="selectProvider(this)">📡 Airtel Money</button>
+          <button class="provider-btn" onclick="selectProvider(this)">🟠 Orange Money</button>
+          <button class="provider-btn" onclick="selectProvider(this)">🌊 Wave</button>
+        </div>
+        <input type="tel" class="form-input" placeholder="Numéro de téléphone Mobile Money (+243...)"/>
+        <input type="text" class="form-input" placeholder="Nom complet du titulaire"/>
+        <input type="email" class="form-input" placeholder="Email pour la confirmation"/>
+      </div>
+
+      <!-- Virement -->
+      <div class="payment-panel" id="panel-virement">
+        <div style="background: rgba(212,168,67,0.08); border: 1px solid rgba(212,168,67,0.2); padding: 20px; margin-bottom: 14px;">
+          <p style="font-family: 'Space Mono', monospace; font-size: 11px; color: var(--or); letter-spacing: 0.1em; margin-bottom: 12px; text-transform: uppercase;">Coordonnées bancaires</p>
+          <p style="font-size: 14px; color: var(--blanc); line-height: 2;">
+            <strong style="color:var(--or)">Bénéficiaire :</strong> HumanitAID Foundation<br>
+            <strong style="color:var(--or)">IBAN :</strong> BE68 5390 0754 7034<br>
+            <strong style="color:var(--or)">BIC/SWIFT :</strong> TRIOBEBB<br>
+            <strong style="color:var(--or)">Banque :</strong> Triodos Bank N.V.<br>
+            <strong style="color:var(--or)">Référence :</strong> DON-RDC-2025
+          </p>
+        </div>
+        <input type="text" class="form-input" placeholder="Votre nom (pour confirmation de réception)"/>
+        <input type="email" class="form-input" placeholder="Email pour le reçu"/>
+      </div>
+
+      <!-- SSL BADGE -->
+      <div class="ssl-badge">
+        <span class="ssl-icon">🔒</span>
+        <span>Connexion sécurisée SSL 256 bits — Données chiffrées et protégées</span>
+      </div>
+
+      <button class="btn-don" onclick="submitDon()">
+        ❤️ &nbsp; CONFIRMER MON DON — $<span id="btn-amount">100</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">Humanit<span>A</span><em>ID</em></div>
+      <p class="footer-desc">HumanitAID est une organisation dédiée à la collecte de fonds pour les victimes des conflits armés à l'Est de la République Démocratique du Congo. Chaque dollar reçu est tracé et rapporté avec transparence totale.</p>
+      <div class="footer-socials">
+        <a href="#" class="social-btn" aria-label="Facebook">f</a>
+        <a href="#" class="social-btn" aria-label="Twitter">𝕏</a>
+        <a href="#" class="social-btn" aria-label="Instagram">📷</a>
+        <a href="#" class="social-btn" aria-label="LinkedIn">in</a>
+        <a href="#" class="social-btn" aria-label="YouTube">▶</a>
+      </div>
+    </div>
+    <div>
+      <p class="footer-col-title">Nos causes</p>
+      <ul class="footer-links">
+        <li><a href="#donner">🏕️ Déplacés de guerre</a></li>
+        <li><a href="#donner">👶 Enfants orphelins</a></li>
+        <li><a href="#donner">🕊️ Veuves & Femmes</a></li>
+        <li><a href="#donner">🩹 Victimes de violence</a></li>
+        <li><a href="#donner">♿ Personnes handicapées</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="footer-col-title">Organisation</p>
+      <ul class="footer-links">
+        <li><a href="#">À propos de nous</a></li>
+        <li><a href="#">Notre équipe terrain</a></li>
+        <li><a href="#">Rapports annuels</a></li>
+        <li><a href="#">Partenaires</a></li>
+        <li><a href="#">Devenir bénévole</a></li>
+        <li><a href="#">Presse & Médias</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="footer-col-title">Contact</p>
+      <ul class="footer-links">
+        <li><a href="mailto:dons@humanitaid.org">✉️ dons@humanitaid.org</a></li>
+        <li><a href="tel:+32000000000">📞 +32 (0) 000 00 00</a></li>
+        <li><a href="#">💬 Whatsapp / Signal</a></li>
+        <li><a href="#">📍 Goma, Nord-Kivu — RDC</a></li>
+        <li><a href="#">🌐 Bruxelles — Europe</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 HumanitAID Foundation · Tous droits réservés · Enregistrée sous le n° ONG-DRC-2021-4847</span>
+    <div class="footer-bottom-links">
+      <a href="#">Politique de confidentialité</a>
+      <a href="#">Conditions d'utilisation</a>
+      <a href="#">Rapport financier 2024</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══ MODAL CONFIRMATION ═══ -->
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal()" aria-label="Fermer">✕</button>
+    <span class="modal-icon">✅</span>
+    <h3 class="modal-title" id="modal-title">Merci infiniment !</h3>
+    <p class="modal-text">Votre générosité va changer une vie réelle en République Démocratique du Congo.</p>
+    <span class="modal-amount" id="modal-amount">$100</span>
+    <span class="modal-cause" id="modal-cause">Toutes les causes</span>
+    <p class="modal-ref" id="modal-ref">Référence : HAD-2025-XXXX · Un reçu vous sera envoyé par email</p>
+    <button class="modal-close" onclick="closeModal()">Fermer · Continuer</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+   JAVASCRIPT
+═══════════════════════════════════════ -->
+<script>
+/* ── HERO SLIDES ── */
+const heroData = [
+  {
+    title: 'Des millions de vies<br>attendent votre <span class="accent">générosité</span>',
+    caption: '« Notre camp de Kanyabayonga abrite 12 000 personnes. Les enfants mangent une fois par jour. S\'il vous plaît, n\'oubliez pas notre existence. »\n— Marie-Claire, déplacée, Nord-Kivu'
+  },
+  {
+    title: 'Un enfant orphelin<br>mérite un <span class="accent">avenir</span>',
+    caption: '« J\'ai 9 ans et je dors dans la rue depuis 4 mois. Je voudrais aller à l\'école comme les autres enfants. »\n— Joël, orphelin, Ituri'
+  },
+  {
+    title: 'Chaque femme<br>mérite sa <span class="accent">dignité</span>',
+    caption: '« On nous a tout pris — nos maris, nos maisons, notre sécurité. Mais notre courage, jamais. »\n— Espérance, veuve de guerre, Sud-Kivu'
+  },
+  {
+    title: 'Ensemble, construisons<br>un Congo <span class="accent">humain</span>',
+    caption: '« Grâce à mon fauteuil roulant, je peux de nouveau regarder mes enfants dans les yeux, debout. »\n— Théodore, amputé des deux jambes, Beni'
+  }
+];
+
+let currentSlide = 0;
+let slideTimer;
+
+function goToSlide(n) {
+  const slides = document.querySelectorAll('.hero-slide');
+  const dots = document.querySelectorAll('.hero-dot');
+  slides[currentSlide].classList.remove('active');
+  dots[currentSlide].classList.remove('active');
+  currentSlide = n;
+  slides[currentSlide].classList.add('active');
+  dots[currentSlide].classList.add('active');
+  document.getElementById('slide-current').textContent = currentSlide + 1;
+  document.getElementById('hero-title').innerHTML = heroData[currentSlide].title;
+  document.getElementById('hero-caption').textContent = heroData[currentSlide].caption;
+}
+
+function nextSlide() {
+  goToSlide((currentSlide + 1) % 4);
+}
+
+slideTimer = setInterval(nextSlide, 5500);
+
+/* ── CITATIONS ── */
+const citations = [
+  { text: '« Injustice anywhere is a threat to justice everywhere. »', author: '— Martin Luther King Jr.' },
+  { text: '« Si vous ne pouvez pas nourrir cent personnes, nourrissez-en une seule. »', author: '— Mère Teresa' },
+  { text: '« La vie d\'un seul homme vaut autant que celle de toute l\'humanité. »', author: '— Albert Einstein' },
+  { text: '« Un enfant, un enseignant, un livre, un stylo peuvent changer le monde. »', author: '— Malala Yousafzai' }
+];
+
+let citIndex = 0;
+const citText = document.getElementById('citation-text');
+const citAuth = document.getElementById('citation-author');
+const citDots = document.querySelectorAll('.citation-dot');
+
+function setCitation(i) {
+  citText.style.opacity = '0';
+  citAuth.style.opacity = '0';
+  setTimeout(() => {
+    citIndex = i;
+    citText.textContent = citations[i].text;
+    citAuth.textContent = citations[i].author;
+    citText.style.opacity = '1';
+    citAuth.style.opacity = '1';
+    citDots.forEach((d, j) => d.classList.toggle('active', j === i));
+  }, 400);
+}
+
+citDots.forEach((d, i) => d.addEventListener('click', () => setCitation(i)));
+setInterval(() => setCitation((citIndex + 1) % citations.length), 6000);
+
+/* ── DON ── */
+let selectedAmount = 100;
+
+function selectAmount(val, btn) {
+  selectedAmount = val;
+  document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('customAmount').value = '';
+  document.getElementById('btn-amount').textContent = val;
+}
+
+function clearSelected() {
+  document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('selected'));
+  const v = parseInt(document.getElementById('customAmount').value) || 0;
+  selectedAmount = v;
+  document.getElementById('btn-amount').textContent = v || '?';
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.payment-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.payment-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+function selectProvider(btn) {
+  document.querySelectorAll('.provider-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+const causeLabels = {
+  deplaces: '🏕️ Déplacés & Réfugiés de guerre',
+  orphelins: '👶 Enfants Orphelins',
+  veuves: '🕊️ Veuves & Femmes survivantes',
+  victimes: '🩹 Victimes de violences armées',
+  handicapes: '♿ Personnes Handicapées',
+  toutes: '❤️ Toutes les causes',
+  '': '❤️ Toutes les causes'
+};
+
+function submitDon() {
+  const customVal = parseInt(document.getElementById('customAmount').value);
+  const amount = customVal > 0 ? customVal : selectedAmount;
+  if (!amount || amount < 1) {
+    alert('Veuillez choisir ou saisir un montant valide.');
+    return;
+  }
+  const causeKey = document.getElementById('causeSelect').value;
+  const causeLabel = causeLabels[causeKey] || '❤️ Toutes les causes';
+  const ref = 'HAD-2025-' + Math.random().toString(36).substring(2,8).toUpperCase();
+
+  document.getElementById('modal-amount').textContent = '$' + amount.toLocaleString();
+  document.getElementById('modal-cause').textContent = causeLabel;
+  document.getElementById('modal-ref').textContent = 'Référence : ' + ref + ' · Un reçu vous sera envoyé par email';
+
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+/* ── INTERSECTION OBSERVER ── */
+// Fade-up
+const fadeEls = document.querySelectorAll('.fade-up');
+const fadeObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
+fadeEls.forEach(el => fadeObs.observe(el));
+
+// Progress bars
+const barObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const fill = e.target;
+      const target = fill.dataset.target;
+      setTimeout(() => { fill.style.width = target + '%'; }, 200);
+      barObs.unobserve(fill);
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.bar-fill').forEach(b => barObs.observe(b));
+
+// Animated counters
+function animateCount(el, target, prefix = '') {
+  const dur = 2200;
+  const step = 20;
+  const increment = target / (dur / step);
+  let current = 0;
+  const timer = setInterval(() => {
+    current = Math.min(current + increment, target);
+    el.textContent = prefix + Math.round(current).toLocaleString('fr-FR');
+    if (current >= target) clearInterval(timer);
+  }, step);
+}
+
+const countObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const el = e.target;
+      animateCount(el, parseInt(el.dataset.count), el.dataset.prefix || '');
+      countObs.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-count]').forEach(el => countObs.observe(el));
+
+// Keyboard close modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
