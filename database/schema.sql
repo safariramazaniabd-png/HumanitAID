@@ -542,11 +542,11 @@ CREATE TRIGGER trg_settings_updated_at
 INSERT INTO settings (key, value, type, category, description) VALUES
     ('site_name', 'HumanitAID', 'string', 'general', 'Nom du site web'),
     ('site_tagline', 'Ensemble pour les oubliés du monde', 'string', 'general', 'Slogan du site'),
-    ('site_url', 'https://humanitaid.org', 'string', 'general', 'URL principale du site'),
+    ('site_url', 'https://humanit-aid.org', 'string', 'general', 'URL principale du site'),
     ('theme', 'dark', 'string', 'appearance', 'Thème visuel du site (dark / light)'),
     ('language', 'fr', 'string', 'general', 'Langue par défaut du site'),
     ('currency', 'USD', 'string', 'donations', 'Devise par défaut pour les dons'),
-    ('contact_email', 'contact@humanitaid.org', 'string', 'contact', 'Adresse email de contact'),
+    ('contact_email', 'contact@humanit-aid.org', 'string', 'contact', 'Adresse email de contact'),
     ('contact_phone', '+243 000 000 000', 'string', 'contact', 'Numéro de téléphone de contact'),
     ('donation_goal_default', '500000', 'number', 'donations', 'Objectif de collecte par défaut'),
     ('enable_newsletter', 'true', 'boolean', 'features', 'Activer l''inscription à la newsletter'),
@@ -562,7 +562,7 @@ INSERT INTO settings (key, value, type, category, description) VALUES
 
 INSERT INTO users (id, email, password_hash, name, role, is_active) VALUES
     ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-     'admin@humanitaid.org',
+     'admin@humanit-aid.org',
      '$2b$12$LJ3m4ys3Lz0YBLCzFhRreuhFGfK.GH2XjHJG8XzOhH1m2c5S3Z5Y.',
      'Super Administrateur',
      'super_admin',

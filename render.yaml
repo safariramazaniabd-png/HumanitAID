@@ -40,7 +40,7 @@ services:
       - key: EMAIL_API_KEY
         sync: false
       - key: EMAIL_FROM
-        value: noreply@humanitaid.org
+        value: noreply@humanit-aid.org
       - key: STORAGE_PROVIDER
         value: local
       - key: UPLOAD_MAX_SIZE_MB

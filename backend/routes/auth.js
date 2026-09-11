@@ -11,7 +11,7 @@ const router = express.Router();
 
 const DEMO_ADMIN = {
   id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-  email: 'admin@humanitaid.org',
+  email: 'admin@humanit-aid.org',
   name: 'Admin HumanitAID',
   role: ROLES.SUPER_ADMIN,
   avatar: null,
@@ -32,11 +32,11 @@ router.post('/login', authLimiter, async (req, res) => {
   }
 
   if (env.demoMode) {
-    if (email === 'admin@humanitaid.org' && password === 'admin') {
+    if (email === 'admin@humanit-aid.org' && password === 'admin') {
       const token = signToken(DEMO_ADMIN);
       return res.json({ token, user: DEMO_ADMIN });
     }
-    return res.status(401).json({ error: 'Identifiants incorrects (demo: admin@humanitaid.org / admin)' });
+    return res.status(401).json({ error: 'Identifiants incorrects (demo: admin@humanit-aid.org / admin)' });
   }
 
   try {

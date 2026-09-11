@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://www.humanitaid.org/sitemap.xml
+Sitemap: https://www.humanit-aid.org/sitemap.xml

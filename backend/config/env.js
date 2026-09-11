@@ -19,9 +19,9 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET || (isProduction ? (() => { throw new Error('JWT_SECRET required'); })() : crypto.randomBytes(32).toString('hex')),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   demoMode: isDemo,
-  corsOrigin: process.env.CORS_ORIGIN || (isProduction ? 'https://www.humanitaid.org' : 'http://localhost:8080'),
-  siteUrl: process.env.SITE_URL || (isProduction ? 'https://www.humanitaid.org' : 'http://localhost:8080'),
-  adminUrl: process.env.ADMIN_URL || (isProduction ? 'https://humanitaid.org/admin' : 'http://localhost:8080/admin'),
+  corsOrigin: process.env.CORS_ORIGIN || (isProduction ? 'https://www.humanit-aid.org' : 'http://localhost:8080'),
+  siteUrl: process.env.SITE_URL || (isProduction ? 'https://www.humanit-aid.org' : 'http://localhost:8080'),
+  adminUrl: process.env.ADMIN_URL || (isProduction ? 'https://humanit-aid.org/admin' : 'http://localhost:8080/admin'),
   databaseUrl: process.env.DATABASE_URL || '',
   directUrl: process.env.DIRECT_URL || '',
   stripe: {
@@ -39,7 +39,7 @@ module.exports = {
   },
   email: {
     apiKey: process.env.EMAIL_API_KEY || '',
-    from: process.env.EMAIL_FROM || 'noreply@humanitaid.org',
+    from: process.env.EMAIL_FROM || 'noreply@humanit-aid.org',
   },
   storage: {
     provider: process.env.STORAGE_PROVIDER || 'local',

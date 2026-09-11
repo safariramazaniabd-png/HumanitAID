@@ -10,7 +10,7 @@ const router = express.Router();
 const DEMO_SETTINGS = {
   site_name: 'HumanitAID Foundation',
   site_description: 'Fondation humanitaire d\'urgence pour la République Démocratique du Congo.',
-  contact_email: 'contact@humanitaid.org',
+  contact_email: 'contact@humanit-aid.org',
   contact_phone: '+243 999 000 000',
   address: 'Avenue Lumumba, 12, Goma, Nord-Kivu, RDC',
   facebook_url: 'https://facebook.com/humanitaid',

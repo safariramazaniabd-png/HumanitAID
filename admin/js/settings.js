@@ -7,7 +7,7 @@
     general: { site_name: 'HumanitAID Foundation', tagline: 'Ensemble pour la RDC', language: 'fr' },
     appearance: { theme: 'dark', visitor_theme: 'dark' },
     seo: { meta_title: 'HumanitAID — Aide humanitaire en RDC', meta_description: 'HumanitAID Foundation lutte contre la crise humanitaire en République Démocratique du Congo.', og_image: '' },
-    contact: { email: 'contact@humanitaid.org', phone: '+243 81 234 5678', address: 'Avenue Lumumba, 45 — Goma, Nord-Kivu, RDC' },
+    contact: { email: 'contact@humanit-aid.org', phone: '+243 81 234 5678', address: 'Avenue Lumumba, 45 — Goma, Nord-Kivu, RDC' },
     social: { facebook: 'https://facebook.com/humanitaid', twitter: 'https://x.com/humanitaid', instagram: 'https://instagram.com/humanitaid', whatsapp: '+243812345678' },
     payment: { stripe_key: 'pk_test_••••••••••••••••', provider: 'stripe' }
   };

@@ -11,12 +11,12 @@ const { buildUpdateQuery } = require('../middleware/sanitizers');
 const router = express.Router();
 
 const DEMO_USERS = [
-  { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', email: 'admin@humanitaid.org', name: 'Admin HumanitAID', role: ROLES.SUPER_ADMIN, avatar: null, created_at: '2024-01-01T00:00:00Z' },
-  { id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901', email: 'marie.kahindo@humanitaid.org', name: 'Dr. Marie Kahindo', role: ROLES.ADMIN, avatar: null, created_at: '2024-03-15T00:00:00Z' },
-  { id: 'c3d4e5f6-a7b8-9012-cdef-123456789012', email: 'jean.mukendi@humanitaid.org', name: 'Jean-Pierre Mukendi', role: ROLES.EDITOR, avatar: null, created_at: '2024-06-01T00:00:00Z' },
-  { id: 'd4e5f6a7-b8c9-0123-defa-234567890123', email: 'grace.nsimire@humanitaid.org', name: 'Sœur Grâce Nsimire', role: ROLES.EDITOR, avatar: null, created_at: '2024-09-10T00:00:00Z' },
-  { id: 'e5f6a7b8-c9d0-1234-efab-345678901234', email: 'finance@humanitaid.org', name: 'Comptable HumanitAID', role: ROLES.FINANCE, avatar: null, created_at: '2025-01-01T00:00:00Z' },
-  { id: 'f6a7b8c9-d0e1-2345-fabc-456789012345', email: 'viewer@humanitaid.org', name: 'Observateur', role: ROLES.VIEWER, avatar: null, created_at: '2025-06-15T00:00:00Z' },
+  { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', email: 'admin@humanit-aid.org', name: 'Admin HumanitAID', role: ROLES.SUPER_ADMIN, avatar: null, created_at: '2024-01-01T00:00:00Z' },
+  { id: 'b2c3d4e5-f6a7-8901-bcde-f12345678901', email: 'marie.kahindo@humanit-aid.org', name: 'Dr. Marie Kahindo', role: ROLES.ADMIN, avatar: null, created_at: '2024-03-15T00:00:00Z' },
+  { id: 'c3d4e5f6-a7b8-9012-cdef-123456789012', email: 'jean.mukendi@humanit-aid.org', name: 'Jean-Pierre Mukendi', role: ROLES.EDITOR, avatar: null, created_at: '2024-06-01T00:00:00Z' },
+  { id: 'd4e5f6a7-b8c9-0123-defa-234567890123', email: 'grace.nsimire@humanit-aid.org', name: 'Sœur Grâce Nsimire', role: ROLES.EDITOR, avatar: null, created_at: '2024-09-10T00:00:00Z' },
+  { id: 'e5f6a7b8-c9d0-1234-efab-345678901234', email: 'finance@humanit-aid.org', name: 'Comptable HumanitAID', role: ROLES.FINANCE, avatar: null, created_at: '2025-01-01T00:00:00Z' },
+  { id: 'f6a7b8c9-d0e1-2345-fabc-456789012345', email: 'viewer@humanit-aid.org', name: 'Observateur', role: ROLES.VIEWER, avatar: null, created_at: '2025-06-15T00:00:00Z' },
 ];
 
 router.get('/', auth, requireMinRole(ROLES.ADMIN), async (req, res) => {
@@ -38,7 +38,7 @@ router.post('/', auth, requireRole(ROLES.SUPER_ADMIN), validationMiddleware(vali
     return res.json({
       user: {
         id: 'a7b8c9d0-e1f2-3456-abcd-567890123456',
-        email: req.body.email || 'nouveau@humanitaid.org',
+        email: req.body.email || 'nouveau@humanit-aid.org',
         name: req.body.name || 'Nouvel utilisateur',
         role: req.body.role || ROLES.VIEWER,
         avatar: null,

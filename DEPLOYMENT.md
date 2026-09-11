@@ -5,7 +5,7 @@
 ```
 User Browser
     ↓
-humanitaid.org (DNS → Spaceship)
+humanit-aid.org (DNS → Spaceship)
     ↓
 Render.com (Web Service — single Node.js process)
     ├── Frontend (static files served by Express)
@@ -86,7 +86,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 3. Set `STRIPE_SECRET_KEY` (starts with `sk_live_`)
 4. Set `STRIPE_PUBLISHABLE_KEY` (starts with `pk_live_`)
 5. Create webhook endpoint:
-   - URL: `https://humanitaid.org/api/webhooks/stripe`
+   - URL: `https://humanit-aid.org/api/webhooks/stripe`
    - Events: `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed`
 6. Copy webhook signing secret to `STRIPE_WEBHOOK_SECRET`
 
@@ -119,16 +119,16 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## Step 6: Configure Domain
 
 1. Go to https://spaceship.com
-2. Navigate to DNS Management for `humanitaid.org`
+2. Navigate to DNS Management for `humanit-aid.org`
 3. Add DNS records (see SPACESHIP_DNS.md)
 4. Wait for DNS propagation (1-48 hours)
-5. Verify with: `dig humanitaid.org`
+5. Verify with: `dig humanit-aid.org`
 
 ## Step 7: Verify SSL
 
-1. After DNS propagates, visit `https://humanitaid.org`
+1. After DNS propagates, visit `https://humanit-aid.org`
 2. SSL certificate should be auto-provisioned by Render
-3. Verify with: `curl -I https://humanitaid.org`
+3. Verify with: `curl -I https://humanit-aid.org`
 
 ## Step 8: Run Database Migrations
 
@@ -145,7 +145,7 @@ psql $DATABASE_URL < database/schema.sql
 psql $DATABASE_UUID << 'SQL'
 INSERT INTO users (email, name, password_hash, role)
 VALUES (
-  'admin@humanitaid.org',
+  'admin@humanit-aid.org',
   'Admin HumanitAID',
   '$(node -e "const bcrypt = require('bcryptjs'); console.log(bcrypt.hashSync('YOUR_STRONG_PASSWORD', 12))")',
   'super_admin'
@@ -156,8 +156,8 @@ SQL
 
 ## Step 10: Test Everything
 
-1. Visit `https://humanitaid.org` — homepage loads
-2. Visit `https://humanitaid.org/admin` — admin login works
+1. Visit `https://humanit-aid.org` — homepage loads
+2. Visit `https://humanit-aid.org/admin` — admin login works
 3. Test donation flow with Stripe test card: `4242 4242 4242 4242`
 4. Check `/api/health` returns `{"status":"ok"}`
 5. Test on mobile device
@@ -188,10 +188,10 @@ If something goes wrong:
 | `DEMO_MODE` | Yes | `false` |
 | `JWT_SECRET` | Yes | 64-char hex string |
 | `DATABASE_URL` | Yes | `postgresql://...` |
-| `CORS_ORIGIN` | Yes | `https://www.humanitaid.org` |
-| `SITE_URL` | Yes | `https://www.humanitaid.org` |
+| `CORS_ORIGIN` | Yes | `https://www.humanit-aid.org` |
+| `SITE_URL` | Yes | `https://www.humanit-aid.org` |
 | `STRIPE_SECRET_KEY` | Yes | `sk_live_...` |
 | `STRIPE_PUBLISHABLE_KEY` | Yes | `pk_live_...` |
 | `STRIPE_WEBHOOK_SECRET` | Yes | `whsec_...` |
 | `EMAIL_API_KEY` | Recommended | `SG...` |
-| `EMAIL_FROM` | Recommended | `noreply@humanitaid.org` |
+| `EMAIL_FROM` | Recommended | `noreply@humanit-aid.org` |

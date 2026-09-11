@@ -145,7 +145,7 @@ npx serve frontend
 ```bash
 # Serve with any static server
 npx serve admin
-# Login: admin@humanitaid.org / admin
+# Login: admin@humanit-aid.org / admin
 ```
 
 ### Full Stack (Backend + Frontend)
@@ -190,7 +190,7 @@ npm start
 
 | Credentials | Value |
 |---|---|
-| Email | `admin@humanitaid.org` |
+| Email | `admin@humanit-aid.org` |
 | Password | `admin` |
 
 ### Dashboard Sections
@@ -429,13 +429,13 @@ PostgreSQL with **16 tables**:
 | `PAYSTACK_SECRET_KEY` | — | Paystack secret key |
 | `PAYSTACK_PUBLIC_KEY` | — | Paystack public key |
 | `EMAIL_API_KEY` | — | Email service API key (optional) |
-| `EMAIL_FROM` | `noreply@humanitaid.org` | Sender email address |
+| `EMAIL_FROM` | `noreply@humanit-aid.org` | Sender email address |
 | `STORAGE_PROVIDER` | `local` | Storage backend (local / s3 / r2) |
 | `STORAGE_BUCKET` | — | Storage bucket name |
 | `STORAGE_ACCESS_KEY` | — | Storage access key |
 | `STORAGE_SECRET_KEY` | — | Storage secret key |
 | `STORAGE_URL` | — | Storage public URL |
-| `ADMIN_DEFAULT_EMAIL` | `admin@humanitaid.org` | Default admin email |
+| `ADMIN_DEFAULT_EMAIL` | `admin@humanit-aid.org` | Default admin email |
 | `ADMIN_DEFAULT_PASSWORD` | `changeme123` | Default admin password |
 
 ---
@@ -500,8 +500,8 @@ GitHub Actions runs on push/PR to `main`:
 
 ```bash
 # Just deploy the static directories
-# frontend/ → humanitaid.org
-# admin/ → admin.humanitaid.org
+# frontend/ → humanit-aid.org
+# admin/ → admin.humanit-aid.org
 ```
 
 ### Railway / Render (Backend)
@@ -556,5 +556,5 @@ This software is proprietary and confidential. Unauthorized copying, modificatio
   <strong>HumanitAID Foundation</strong><br>
   <em>Ensemble pour les oubliés du monde</em><br>
   Goma, Nord-Kivu, République Démocratique du Congo<br>
-  <a href="mailto:contact@humanitaid.org">contact@humanitaid.org</a>
+  <a href="mailto:contact@humanit-aid.org">contact@humanit-aid.org</a>
 </p>

@@ -19,7 +19,7 @@ function causeLabel(cause) {
 
 async function createCheckoutSession({ amount, currency, donorEmail, cause, publicReference, successUrl, cancelUrl }) {
   if (env.demoMode || !env.stripe.secretKey) {
-    return { id: 'cs_test_demo_' + Date.now(), url: successUrl || 'https://humanitaid.org/?donation=success', demo: true };
+    return { id: 'cs_test_demo_' + Date.now(), url: successUrl || 'https://humanit-aid.org/?donation=success', demo: true };
   }
 
   const session = await getStripe().checkout.sessions.create({

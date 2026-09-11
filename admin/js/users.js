@@ -4,12 +4,12 @@
 
 (function () {
   let users = [
-    { id: 1, name: 'Super Admin', email: 'admin@humanitaid.org', role: 'Super Admin', status: 'active', last_login: '2026-09-03T14:30:00' },
-    { id: 2, name: 'Marie Kasongo', email: 'marie@humanitaid.org', role: 'Admin', status: 'active', last_login: '2026-09-03T10:15:00' },
-    { id: 3, name: 'Jean-Pierre Mutombo', email: 'jp@humanitaid.org', role: 'Editor', status: 'active', last_login: '2026-09-02T16:45:00' },
-    { id: 4, name: 'Nadia Lukusa', email: 'nadia@humanitaid.org', role: 'Editor', status: 'active', last_login: '2026-09-01T09:00:00' },
-    { id: 5, name: 'Samuel Kabongo', email: 'samuel@humanitaid.org', role: 'Finance', status: 'active', last_login: '2026-08-30T11:20:00' },
-    { id: 6, name: 'Viewer Demo', email: 'viewer@humanitaid.org', role: 'Viewer', status: 'inactive', last_login: '2026-08-15T08:00:00' }
+    { id: 1, name: 'Super Admin', email: 'admin@humanit-aid.org', role: 'Super Admin', status: 'active', last_login: '2026-09-03T14:30:00' },
+    { id: 2, name: 'Marie Kasongo', email: 'marie@humanit-aid.org', role: 'Admin', status: 'active', last_login: '2026-09-03T10:15:00' },
+    { id: 3, name: 'Jean-Pierre Mutombo', email: 'jp@humanit-aid.org', role: 'Editor', status: 'active', last_login: '2026-09-02T16:45:00' },
+    { id: 4, name: 'Nadia Lukusa', email: 'nadia@humanit-aid.org', role: 'Editor', status: 'active', last_login: '2026-09-01T09:00:00' },
+    { id: 5, name: 'Samuel Kabongo', email: 'samuel@humanit-aid.org', role: 'Finance', status: 'active', last_login: '2026-08-30T11:20:00' },
+    { id: 6, name: 'Viewer Demo', email: 'viewer@humanit-aid.org', role: 'Viewer', status: 'inactive', last_login: '2026-08-15T08:00:00' }
   ];
 
   let editing = null;

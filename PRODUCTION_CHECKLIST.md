@@ -8,9 +8,9 @@
 - [ ] `DEMO_MODE=false`
 - [ ] `JWT_SECRET` = 64-char random hex (not the dev fallback)
 - [ ] `DATABASE_URL` points to production PostgreSQL (with `sslmode=require`)
-- [ ] `CORS_ORIGIN` = `https://www.humanitaid.org,https://humanitaid.org`
-- [ ] `SITE_URL` = `https://www.humanitaid.org`
-- [ ] `ADMIN_URL` = `https://humanitaid.org/admin`
+- [ ] `CORS_ORIGIN` = `https://www.humanit-aid.org,https://humanit-aid.org`
+- [ ] `SITE_URL` = `https://www.humanit-aid.org`
+- [ ] `ADMIN_URL` = `https://humanit-aid.org/admin`
 - [ ] No real secrets committed to git (verify with `git log -p`)
 
 ### Database
@@ -26,7 +26,7 @@
 - [ ] `STRIPE_SECRET_KEY` = `sk_live_...` set
 - [ ] `STRIPE_PUBLISHABLE_KEY` = `pk_live_...` set
 - [ ] `STRIPE_WEBHOOK_SECRET` = `whsec_...` set
-- [ ] Webhook endpoint registered: `https://humanitaid.org/api/webhooks/stripe`
+- [ ] Webhook endpoint registered: `https://humanit-aid.org/api/webhooks/stripe`
 - [ ] Webhook events: `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed`
 - [ ] Test mode payments verified before switching to live keys
 
@@ -39,7 +39,7 @@
 ### Email
 - [ ] Email provider configured (SendGrid / Mailgun / SMTP)
 - [ ] `EMAIL_API_KEY` set
-- [ ] `EMAIL_FROM` = `noreply@humanitaid.org`
+- [ ] `EMAIL_FROM` = `noreply@humanit-aid.org`
 - [ ] Donation receipt emails tested
 - [ ] Admin notification emails tested
 
@@ -81,7 +81,7 @@
 - [ ] User management with RBAC
 
 ### Infrastructure
-- [ ] Domain `humanitaid.org` configured
+- [ ] Domain `humanit-aid.org` configured
 - [ ] DNS records set (see SPACESHIP_DNS.md)
 - [ ] SSL/TLS certificate active (auto via hosting)
 - [ ] Health check endpoint responding: `/api/health`

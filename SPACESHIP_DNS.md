@@ -4,7 +4,7 @@
 
 Before configuring DNS, you must have:
 
-1. **Domain purchased** on Spaceship: `humanitaid.org`
+1. **Domain purchased** on Spaceship: `humanit-aid.org`
 2. **Hosting platform selected** (Recommended: Render.com)
 3. **IP address or CNAME** from your hosting provider
 
@@ -12,7 +12,7 @@ Before configuring DNS, you must have:
 
 ## DNS Records to Create
 
-Log in to [Spaceship](https://spaceship.com) → My Domains → `humanitaid.org` → DNS Management.
+Log in to [Spaceship](https://spaceship.com) → My Domains → `humanit-aid.org` → DNS Management.
 
 ### Record 1: Root Domain (A Record)
 
@@ -36,7 +36,7 @@ If Spaceship supports URL forwarding, add:
 
 | Type | Host | Value | TTL |
 |---|---|---|---|
-| URL | @ | `https://www.humanitaid.org` | 3600 |
+| URL | @ | `https://www.humanit-aid.org` | 3600 |
 
 ### Record 4: Email (Optional — for future)
 
@@ -63,7 +63,7 @@ If Spaceship supports URL forwarding, add:
 2. Click on your Web Service
 3. Go to **Settings** → **Domains / Certificates**
 4. Click **Custom Domains** → **Add Custom Domain**
-5. Enter `humanitaid.org`
+5. Enter `humanit-aid.org`
 6. Render will show you the IP address to point to
 
 ---
@@ -77,8 +77,8 @@ After creating records:
 3. **Check status**: Visit https://dnschecker.org
 4. **Test resolution**:
    ```bash
-   dig humanitaid.org
-   dig www.humanitaid.org
+   dig humanit-aid.org
+   dig www.humanit-aid.org
    ```
 
 ---
@@ -88,7 +88,7 @@ After creating records:
 Render provides **automatic SSL certificates** via Let's Encrypt:
 
 1. After DNS propagates, Render auto-provisions SSL
-2. Visit `https://humanitaid.org` to verify
+2. Visit `https://humanit-aid.org` to verify
 3. Certificate renews automatically every 90 days
 
 **If SSL doesn't work:**
@@ -104,13 +104,13 @@ Render provides **automatic SSL certificates** via Let's Encrypt:
 
 In Render Dashboard:
 1. Go to Settings → Domains
-2. Add both `humanitaid.org` and `www.humanitaid.org`
-3. Set `humanitaid.org` as primary
+2. Add both `humanit-aid.org` and `www.humanit-aid.org`
+3. Set `humanit-aid.org` as primary
 4. Render auto-redirects www to non-www
 
 ### Option B: non-www → www
 
-Same process but set `www.humanitaid.org` as primary.
+Same process but set `www.humanit-aid.org` as primary.
 
 ---
 
@@ -120,15 +120,15 @@ Same process but set `www.humanitaid.org` as primary.
 
 ```bash
 # Root domain
-dig humanitaid.org +short
+dig humanit-aid.org +short
 # Should return your Render IP
 
 # WWW subdomain
-dig www.humanitaid.org +short
+dig www.humanit-aid.org +short
 # Should return Render's CNAME target
 
 # SSL certificate
-curl -I https://humanitaid.org
+curl -I https://humanit-aid.org
 # Should return HTTP/2 200 with HSTS headers
 ```
 
@@ -136,12 +136,12 @@ curl -I https://humanitaid.org
 
 ```bash
 # If www is primary:
-curl -I http://humanitaid.org
-# Should return 301 → https://www.humanitaid.org
+curl -I http://humanit-aid.org
+# Should return 301 → https://www.humanit-aid.org
 
 # If non-www is primary:
-curl -I http://www.humanitaid.org
-# Should return 301 → https://humanitaid.org
+curl -I http://www.humanit-aid.org
+# Should return 301 → https://humanit-aid.org
 ```
 
 ---
@@ -163,7 +163,7 @@ curl -I http://www.humanitaid.org
 After DNS is working:
 
 1. Update `CORS_ORIGIN` in `.env.production` to include both domains
-2. Update `SITE_URL` to `https://www.humanitaid.org`
-3. Update `ADMIN_URL` to `https://humanitaid.org/admin`
+2. Update `SITE_URL` to `https://www.humanit-aid.org`
+3. Update `ADMIN_URL` to `https://humanit-aid.org/admin`
 4. Redeploy the application
 5. Test all functionality
