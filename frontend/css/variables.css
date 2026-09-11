@@ -1,0 +1,177 @@
+/* ═══════════════════════════════════════
+   DESIGN TOKENS — HumanitAID
+   Dark theme default, light via [data-theme="light"]
+   ═══════════════════════════════════════ */
+
+:root {
+  /* ═══ Brand palette (dark theme base) ═══ */
+  --rouge: #C0392B;
+  --rouge-vif: #E74C3C;
+  --or: #D4A843;
+  --or-clair: #F0C060;
+  --noir: #0D0D0D;
+  --noir-doux: #1A1A1A;
+  --gris-fonce: #2C2C2C;
+  --gris: #4A4A4A;
+  --gris-clair: #8A8A8A;
+  --creme: #F5EDD8;
+  --blanc: #FAFAF5;
+
+  /* ═══ Semantic color tokens ═══ */
+  --background: var(--noir);
+  --surface: var(--noir-doux);
+  --surface-elevated: var(--gris-fonce);
+  --text-primary: var(--blanc);
+  --text-secondary: var(--gris-clair);
+  --text-muted: var(--gris);
+  --border-subtle: rgba(212, 168, 67, 0.15);
+  --border-default: rgba(212, 168, 67, 0.25);
+  --border-strong: rgba(212, 168, 67, 0.4);
+  --overlay-bg: rgba(0, 0, 0, 0.85);
+  --nav-bg: rgba(13, 13, 13, 0.96);
+
+  /* Functional accents */
+  --accent: var(--rouge);
+  --accent-hover: var(--rouge-vif);
+  --success: #27AE60;
+  --warning: #F39C12;
+  --danger: var(--rouge);
+  --info: #2980B9;
+
+  /* Track & idle surfaces */
+  --track-bg: rgba(255, 255, 255, 0.08);
+  --dot-idle: rgba(255, 255, 255, 0.25);
+  --overlay-card: rgba(0, 0, 0, 0.7);
+
+  /* ═══ Typography ═══ */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: var(--font-sans);
+  --font-body: var(--font-sans);
+  --font-mono: var(--font-sans);
+
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Type scale (official) */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-ui: 15px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 28px;
+  --text-4xl: 32px;
+  --text-5xl: 40px;
+  --text-6xl: 48px;
+
+  /* Named size tokens (kept for compatibility, mapped to scale) */
+  --fs-hero: clamp(40px, 5vw, 60px);
+  --fs-section-title: clamp(32px, 4vw, 48px);
+  --fs-citation: clamp(22px, 3vw, 32px);
+  --fs-body: var(--text-lg);
+  --fs-body-lg: var(--text-xl);
+  --fs-card-title: var(--text-xl);
+  --fs-card-title-lg: var(--text-2xl);
+  --fs-card-desc: var(--text-ui);
+  --fs-card-desc-sm: var(--text-sm);
+  --fs-stat-num: var(--text-5xl);
+  --fs-stat-label: 11px;
+  --fs-nav-link: 13px;
+  --fs-ticker: var(--text-xs);
+  --fs-btn: var(--text-sm);
+  --fs-btn-lg: var(--text-ui);
+  --fs-label: 11px;
+  --fs-badge: 11px;
+  --fs-modal-title: var(--text-3xl);
+  --fs-modal-amount: var(--text-4xl);
+  --fs-footer-logo: var(--text-3xl);
+  --fs-footer-desc: var(--text-sm);
+  --fs-form-input: var(--text-base);
+  --fs-form-input-sm: var(--text-sm);
+
+  /* Letter spacing */
+  --tracking-tight: -0.01em;
+  --tracking-tighter: -0.02em;
+  --tracking-normal: normal;
+
+  /* Line heights */
+  --lh-tight: 1.0;
+  --lh-heading: 1.2;
+  --lh-body: 1.5;
+  --lh-card: 1.5;
+  --lh-loose: 1.6;
+
+  /* ═══ Spacing (official scale) ═══ */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-2xl: 24px;
+  --space-3xl: 32px;
+  --space-4xl: 40px;
+  --space-5xl: 48px;
+  --space-6xl: 64px;
+  --space-section: 96px;
+  --space-section-mobile: 70px;
+
+  /* ═══ Radius ═══ */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-full: 50%;
+
+  /* ═══ Shadows ═══ */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.5);
+
+  /* ═══ Transitions ═══ */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.4s ease;
+  --transition-hero: 1.2s ease-in-out;
+  --transition-bar: 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ═══ Z-index scale ═══ */
+  --z-ticker: 1000;
+  --z-nav: 999;
+  --z-hero: 10;
+  --z-modal: 9999;
+
+  /* ═══ Layout ═══ */
+  --nav-height: 64px;
+  --max-content-width: 1200px;
+  --section-padding-x: 48px;
+  --section-padding-x-mobile: 20px;
+}
+
+/* ═══════════════════════════════════════
+   LIGHT THEME
+   ═══════════════════════════════════════ */
+
+[data-theme="light"] {
+  --background: var(--blanc);
+  --bg-primary: var(--blanc);
+  --surface: #f0f0ea;
+  --bg-secondary: #f0f0ea;
+  --surface-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #1A1A1A;
+  --text-secondary: #4A4A4A;
+  --text-muted: #8A8A8A;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.15);
+  --border-strong: rgba(0, 0, 0, 0.25);
+  --overlay-bg: rgba(255, 255, 255, 0.85);
+  --nav-bg: rgba(255, 255, 255, 0.96);
+  --track-bg: rgba(0, 0, 0, 0.1);
+  --dot-idle: rgba(0, 0, 0, 0.25);
+  --overlay-card: rgba(10, 10, 10, 0.75);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.18);
+}

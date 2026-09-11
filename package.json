@@ -1,0 +1,23 @@
+{
+  "name": "humanitaid",
+  "version": "1.0.0",
+  "description": "HumanitAID Foundation — International Humanitarian Platform",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=backend",
+    "start": "npm start --workspace=backend",
+    "build": "node -e \"console.log('Build OK — static frontend, no compilation needed')\"",
+    "lint": "node --check backend/**/*.js && node --check frontend/js/*.js && node --check admin/js/*.js && echo 'Lint OK'",
+    "verify": "npm run lint && npm run build && echo 'All checks passed'",
+    "health": "curl -sf http://localhost:3000/api/health || echo 'Server not running'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "HumanitAID Foundation",
+  "license": "UNLICENSED"
+}
