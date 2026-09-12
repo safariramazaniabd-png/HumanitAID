@@ -1,3 +1,5 @@
+const { CAUSE_SLUGS } = require('../../shared/constants');
+
 const MAX_TITLE = 500;
 const MAX_CONTENT = 50000;
 const MAX_SLUG = 200;
@@ -7,6 +9,7 @@ const MAX_PASSWORD = 128;
 const MIN_PASSWORD = 8;
 const MAX_MESSAGE = 2000;
 const MAX_URL = 2048;
+const MAX_DONATION_AMOUNT = 1000000;
 
 function sanitize(str) {
   if (typeof str !== 'string') return '';
@@ -28,7 +31,7 @@ function isValidUrl(url) {
 
 function validateDonation(body) {
   const errors = [];
-  const { donor_name, email, amount, currency, method } = body;
+  const { donor_name, email, amount, currency, method, cause } = body;
 
   if (!donor_name || sanitize(donor_name).length < 2) {
     errors.push('Nom requis (min 2 caractères)');
@@ -39,12 +42,22 @@ function validateDonation(body) {
   if (!email || !isValidEmail(email)) {
     errors.push('Email invalide');
   }
-  if (!amount || isNaN(amount) || Number(amount) < 1) {
-    errors.push('Montant invalide (min 1)');
+
+  const amountNum = Number(amount);
+  const amountValid =
+    amount !== undefined && amount !== null && amount !== '' &&
+    !(typeof amount === 'boolean') &&
+    isFinite(amountNum) && amountNum >= 1 && amountNum <= MAX_DONATION_AMOUNT;
+  if (!amountValid) {
+    errors.push('Montant invalide (min 1, max 1 000 000)');
+  } else {
+    const amountString = String(amount);
+    const decimalPart = amountString.split('.')[1] || '';
+    if (decimalPart.length > 2) {
+      errors.push('Montant invalide (max 2 décimales)');
+    }
   }
-  if (amount && Number(amount) > 1000000) {
-    errors.push('Montant trop élevé');
-  }
+
   const allowedCurrencies = ['EUR', 'USD', 'CDF', 'GBP', 'CAD'];
   if (currency && !allowedCurrencies.includes(currency)) {
     errors.push('Devise non supportée');
@@ -52,6 +65,10 @@ function validateDonation(body) {
   const allowedMethods = ['stripe', 'flutterwave', 'paystack', 'wire'];
   if (method && !allowedMethods.includes(method)) {
     errors.push('Méthode de paiement non supportée');
+  }
+  const allowedCauses = [...CAUSE_SLUGS, 'toutes', ''];
+  if (cause !== undefined && cause !== null && !allowedCauses.includes(cause)) {
+    errors.push('Cause non reconnue');
   }
   return errors;
 }

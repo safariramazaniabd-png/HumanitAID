@@ -3,9 +3,17 @@
    Graceful fallback to demo data
    ═══════════════════════════════════════ */
 
-const API_BASE = window.location.port
-  ? `${window.location.protocol}//${window.location.hostname}:3000/api`
-  : `${window.location.origin}/api`;
+function resolveApiBase() {
+  const cfg = window.HUMANITAID_CONFIG;
+  if (cfg && cfg.API_BASE) {
+    return cfg.API_BASE.replace(/\/+$/, '') + '/api';
+  }
+  return window.location.port
+    ? `${window.location.protocol}//${window.location.hostname}:3000/api`
+    : `${window.location.origin}/api`;
+}
+
+const API_BASE = resolveApiBase();
 
 function escHtml(str) {
   if (!str) return '';
@@ -448,11 +456,25 @@ async function submitDonation(donationData) {
 }
 
 async function createCheckoutSession(data) {
-  const result = await api.post('/donations/checkout', data);
-  if (!result) {
-    return { url: null, demo: true, reference: data.reference || '' };
+  try {
+    const res = await fetch(`${API_BASE}/donations/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return {
+        url: null,
+        demo: false,
+        error: body.error || 'Le paiement n\'a pas pu être initié. Veuillez réessayer.',
+        status: res.status,
+      };
+    }
+    return { url: body.url || null, demo: Boolean(body.demo), reference: body.reference || data.reference || '', error: null };
+  } catch (_err) {
+    return { url: null, demo: true, error: null };
   }
-  return { url: result.url || null, demo: Boolean(result.demo), reference: result.reference || data.reference || '' };
 }
 
 async function fetchPublicConfig() {

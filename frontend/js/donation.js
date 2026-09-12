@@ -39,8 +39,8 @@ const DonationForm = {
       const isDemo = params.get('demo') === '1';
 
       document.getElementById('modal-amount').textContent = amount ? '$' + Number(amount).toLocaleString() : 'Paiement reçu';
-      document.getElementById('modal-cause').textContent = 'Merci pour votre générosité.';
-      document.getElementById('modal-ref').textContent = 'Référence : ' + ref + (isDemo ? '' : ' · Un reçu vous sera envoyé par email');
+      document.getElementById('modal-cause').textContent = 'Votre paiement a bien été transmis.';
+      document.getElementById('modal-ref').textContent = 'Référence : ' + ref + (isDemo ? '' : ' — La confirmation définitive de votre don sera enregistrée après vérification du paiement.');
 
       if (isDemo) {
         const banner = document.querySelector('.modal-cause');
@@ -199,6 +199,12 @@ const DonationForm = {
           window.location.href = session.url;
           return;
         }
+        if (session && session.error) {
+          alert(session.error);
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Confirmer le don';
+          return;
+        }
         demo = true;
       } catch (err) {
         console.warn('Checkout failed:', err);
@@ -221,7 +227,7 @@ const DonationForm = {
     document.getElementById('modal-amount').textContent = '$' + amount.toLocaleString();
     document.getElementById('modal-cause').textContent = causeLabel;
     const refLine = result && result.ref ? result.ref : ref;
-    document.getElementById('modal-ref').textContent = 'Référence : ' + refLine + (demo ? '' : ' · Un reçu vous sera envoyé par email');
+    document.getElementById('modal-ref').textContent = 'Référence : ' + refLine + (demo ? '' : ' — En attente de confirmation du paiement.');
 
     const demoLabel = document.querySelector('.modal-demo-label');
     if (demo) {

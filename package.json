@@ -11,7 +11,7 @@
     "dev": "npm run dev --workspace=backend",
     "start": "npm start --workspace=backend",
     "build": "node -e \"console.log('Build OK — static frontend, no compilation needed')\"",
-    "lint": "node --check backend/**/*.js && node --check frontend/js/*.js && node --check admin/js/*.js && echo 'Lint OK'",
+    "lint": "ls backend/*.js backend/**/*.js frontend/js/*.js frontend/api/*.js frontend/api/**/*.js admin/js/*.js shared/*.js 2>/dev/null | xargs -n1 node --check && echo 'Lint OK'",
     "verify": "npm run lint && npm run build && echo 'All checks passed'",
     "health": "curl -sf http://localhost:3000/api/health || echo 'Server not running'"
   },

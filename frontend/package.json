@@ -1,0 +1,16 @@
+{
+  "name": "humanitaid-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HumanitAID Frontend — site statique + fonctions serverless Vercel",
+  "scripts": {
+    "build": "node -e \"console.log('Build OK — static frontend, no compilation needed')\""
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "stripe": "^22.6.2",
+    "pg": "^8.13.1"
+  }
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'humanitaid-v1';
+const CACHE_NAME = 'humanitaid-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   '/css/components.css',
   '/css/sections.css',
   '/css/responsive.css',
+  '/js/config.js',
   '/js/app.js',
   '/js/api.js',
   '/js/theme.js',

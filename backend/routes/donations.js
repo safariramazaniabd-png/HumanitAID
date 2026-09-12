@@ -127,8 +127,16 @@ router.post('/checkout', validationMiddleware(validateDonation), async (req, res
 
     return res.json({ url: session.url, reference: publicReference, demo: false });
   } catch (err) {
-    console.error('[Donations] Checkout error:', err);
-    return res.status(500).json({ error: 'Erreur serveur' });
+    if (err.code === 'STRIPE_LIVE_NOT_ALLOWED') {
+      console.error('[Donations] Checkout refusé (LIVE):', err.message);
+      return res.status(503).json({ error: 'Les paiements Stripe live sont désactivés. Veuillez réessayer plus tard.' });
+    }
+    if (err.code === 'INVALID_AMOUNT') {
+      return res.status(400).json({ error: 'Montant invalide' });
+    }
+    const safeMsg = String(err && err.message ? err.message : err).replace(/sk_[a-z]+_[A-Za-z0-9]+/gi, '[REDACTED]');
+    console.error('[Donations] Checkout error:', safeMsg);
+    return res.status(500).json({ error: 'Le paiement n\'a pas pu être initié. Veuillez réessayer.' });
   }
 });
 
