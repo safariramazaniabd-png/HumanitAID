@@ -30,9 +30,10 @@ Log in to [Spaceship](https://spaceship.com) → My Domains → `humanit-aid.org
 
 > Replace `humanitaid.onrender.com` with your actual Render URL
 
-### Record 3: Apex Domain Redirect (Optional)
+### Record 3: Apex Domain Redirect (Requis — origine canonique `www`)
 
-If Spaceship supports URL forwarding, add:
+L'origine canonique du site est `https://www.humanit-aid.org`. Le domaine racine `@`
+doit rediriger de façon permanente vers `www` :
 
 | Type | Host | Value | TTL |
 |---|---|---|---|
@@ -98,19 +99,19 @@ Render provides **automatic SSL certificates** via Let's Encrypt:
 
 ---
 
-## Redirect www to non-www (or vice versa)
+## Redirect non-www → www (origine canonique)
 
-### Option A: www → non-www (Recommended)
+### Option B: non-www → www (Recommended)
 
 In Render Dashboard:
 1. Go to Settings → Domains
 2. Add both `humanit-aid.org` and `www.humanit-aid.org`
-3. Set `humanit-aid.org` as primary
-4. Render auto-redirects www to non-www
+3. Set `www.humanit-aid.org` as primary
+4. Render auto-redirects `humanit-aid.org` → `https://www.humanit-aid.org`
 
-### Option B: non-www → www
+### Option A: www → non-www
 
-Same process but set `www.humanit-aid.org` as primary.
+Same process but set `humanit-aid.org` as primary (non recommandé).
 
 ---
 
@@ -164,6 +165,6 @@ After DNS is working:
 
 1. Update `CORS_ORIGIN` in `.env.production` to include both domains
 2. Update `SITE_URL` to `https://www.humanit-aid.org`
-3. Update `ADMIN_URL` to `https://humanit-aid.org/admin`
+3. Update `ADMIN_URL` to `https://www.humanit-aid.org/admin`
 4. Redeploy the application
 5. Test all functionality

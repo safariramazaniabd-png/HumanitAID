@@ -155,20 +155,26 @@ router.post('/', validationMiddleware(validateDonation), async (req, res) => {
   }
 
   try {
-    const { donor_name, email, amount, currency, method, cause, reference, provider, message } = req.body;
-    const PROVIDER_ENUM = ['stripe', 'flutterwave', 'paystack'];
+    // Allowlist stricte : seuls ces champs sont acceptés. Jamais de
+    // reference, provider_transaction_id, status, receipt_url ou payment_intent.
+    const { donor_name, email, amount, currency, method, cause, message } = req.body;
+    const reference = `HAD-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const METHOD_PROVIDER = { stripe: 'stripe', flutterwave: 'flutterwave', paystack: 'paystack' };
+    const MOBILE_PROVIDERS = ['mpesa', 'airtel', 'orange', 'wave'];
     const meta = { ...(message ? { message } : {}) };
     let providerColumn = null;
-    if (provider && PROVIDER_ENUM.includes(provider)) {
-      providerColumn = provider;
-    } else if (provider) {
-      meta.mobile_provider = provider;
+    if (METHOD_PROVIDER[method]) {
+      providerColumn = METHOD_PROVIDER[method];
+    } else if (method === 'wire') {
+      providerColumn = null;
+    } else if (MOBILE_PROVIDERS.includes(req.body.provider)) {
+      meta.mobile_provider = req.body.provider;
     }
     const { rows } = await query(
       `INSERT INTO donations (public_reference, donor_name, donor_email, amount, currency, cause_slug, payment_method, provider, status, metadata)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [
-        reference || `HAD-${Date.now()}`,
+        reference,
         donor_name,
         email,
         amount,

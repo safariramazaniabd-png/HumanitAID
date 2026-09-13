@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 
 const isProduction = process.env.NODE_ENV === 'production';
-const isDemo = process.env.DEMO_MODE !== 'false';
+const isDemo = process.env.DEMO_MODE === 'true';
 
 if (isProduction && isDemo) {
   console.error('[FATAL] DEMO_MODE cannot be true in production. Set DEMO_MODE=false');
@@ -21,7 +21,7 @@ module.exports = {
   demoMode: isDemo,
   corsOrigin: process.env.CORS_ORIGIN || (isProduction ? 'https://www.humanit-aid.org' : 'http://localhost:8080'),
   siteUrl: process.env.SITE_URL || (isProduction ? 'https://www.humanit-aid.org' : 'http://localhost:8080'),
-  adminUrl: process.env.ADMIN_URL || (isProduction ? 'https://humanit-aid.org/admin' : 'http://localhost:8080/admin'),
+  adminUrl: process.env.ADMIN_URL || (isProduction ? 'https://www.humanit-aid.org/admin' : 'http://localhost:8080/admin'),
   databaseUrl: process.env.DATABASE_URL || '',
   directUrl: process.env.DIRECT_URL || '',
   stripe: {

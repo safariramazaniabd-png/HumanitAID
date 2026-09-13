@@ -113,12 +113,12 @@ HumanitAID/
 
 ### Backend API
 
-- **11 route modules** — auth, posts, media, slides, causes, testimonials, news, donations, settings, users, webhooks
+- **12 route modules** — auth, posts, media, slides, causes, testimonials, news, donations, settings, users, webhooks, config
 - **Payment orchestrator** — Stripe, Flutterwave, Paystack integration
 - **Webhook endpoints** — Stripe, Flutterwave, Paystack verification
 - **Demo mode** — full API works without database (hardcoded mock data)
 - **File uploads** — Multer + Sharp for image processing
-- **Rate limiting** — separate limiters for auth (5 req/15min) and general (100 req/15min)
+- **Rate limiting** — separate limiters for auth (20 req/15min) and general (600 req/15min)
 - **Security headers** — Helmet with CSP, HSTS
 
 ---
@@ -280,7 +280,7 @@ Base URL: `http://localhost:3000/api`
 | Method | Endpoint | Auth | Min Role | Description |
 |---|---|---|---|---|
 | `GET` | `/donations` | Yes | Finance | List donations (paginated, filterable) |
-| `GET` | `/donations/stats` | Yes | Finance | Aggregate donation statistics |
+| `GET` | `/donations/stats` | No | — | Aggregate donation statistics (public, no PII) |
 | `POST` | `/donations` | No | — | Create a donation |
 
 ### Settings
@@ -399,7 +399,7 @@ PostgreSQL with **16 tables**:
 |---|---|
 | **Authentication** | JWT tokens (7-day expiry), bcrypt password hashing (12 rounds) |
 | **RBAC** | 5-role hierarchy (viewer → super_admin), middleware-enforced |
-| **Rate Limiting** | Auth: 5 req/15min, General: 100 req/15min |
+| **Rate Limiting** | Auth: 20 req/15min, General: 600 req/15min |
 | **Security Headers** | Helmet (CSP, HSTS, X-Frame-Options, etc.) |
 | **File Uploads** | Multer validation, Sharp processing, size limits |
 | **CORS** | Configurable origin, credentials support |
@@ -436,7 +436,7 @@ PostgreSQL with **16 tables**:
 | `STORAGE_SECRET_KEY` | — | Storage secret key |
 | `STORAGE_URL` | — | Storage public URL |
 | `ADMIN_DEFAULT_EMAIL` | `admin@humanit-aid.org` | Default admin email |
-| `ADMIN_DEFAULT_PASSWORD` | `changeme123` | Default admin password |
+| `ADMIN_DEFAULT_PASSWORD` | — | Admin password lu au boot par `bootstrapAdmin.js` (requis en production, ≥ 12 caractères, jamais loggé) |
 
 ---
 
@@ -448,7 +448,7 @@ PostgreSQL with **16 tables**:
 npm run dev          # Start backend with hot-reload (node --watch)
 npm start            # Start backend in production mode
 npm run build        # No-op (static site, no build step)
-npm run lint         # No-op (no linter configured yet)
+npm run lint         # Syntax check (node --check) on all JS files
 ```
 
 ### Adding a New API Route
@@ -478,7 +478,7 @@ npm run lint         # No-op (no linter configured yet)
 
 GitHub Actions runs on push/PR to `main`:
 
-1. **Lint** — JavaScript syntax check (`node -c`) on all `.js` files
+1. **Lint** — JavaScript syntax check (`node --check`) on all `.js` files
 2. **HTML validity** — checks for `<!DOCTYPE html>` in key files
 3. **Backend verification** — starts server in demo mode, hits health endpoints
 4. **Security scan** — checks for hardcoded secrets
@@ -500,8 +500,8 @@ GitHub Actions runs on push/PR to `main`:
 
 ```bash
 # Just deploy the static directories
-# frontend/ → humanit-aid.org
-# admin/ → admin.humanit-aid.org
+# frontend/ → www.humanit-aid.org
+# admin/ → www.humanit-aid.org/admin
 ```
 
 ### Railway / Render (Backend)

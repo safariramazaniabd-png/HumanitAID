@@ -59,7 +59,6 @@ app.use('/api/donations', donationsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/config', configRoutes);
-app.use('/api/webhooks', webhooksRoutes);
 
 const { query } = require('./config/database');
 
@@ -113,8 +112,16 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Erreur serveur interne' });
 });
 
-app.listen(env.port, () => {
-  console.log(`[Server] HumanitAID API — http://localhost:${env.port}`);
-  console.log(`[Server] Env: ${env.nodeEnv} | Demo: ${env.demoMode}`);
-  console.log(`[Server] CORS: ${env.corsOrigin}`);
-});
+require('./services/bootstrapAdmin')
+  .ensureAdmin()
+  .then(() => {
+    app.listen(env.port, () => {
+      console.log(`[Server] HumanitAID API — http://localhost:${env.port}`);
+      console.log(`[Server] Env: ${env.nodeEnv} | Demo: ${env.demoMode}`);
+      console.log(`[Server] CORS: ${env.corsOrigin}`);
+    });
+  })
+  .catch((err) => {
+    console.error('[Server] Échec du démarrage:', err.message);
+    process.exit(1);
+  });

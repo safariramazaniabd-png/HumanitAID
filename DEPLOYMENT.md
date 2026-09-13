@@ -5,25 +5,24 @@
 ```
 User Browser
     ↓
-humanit-aid.org (DNS → Spaceship)
+www.humanit-aid.org (DNS → Spaceship, apex redirigé vers www)
+    ├── Vercel
+    │     ├── Frontend (static files : frontend/)
+    │     └── Serverless API (frontend/api/ : dons + webhooks Stripe)
+    └── Render.com (Web Service express — admin JWT uniquement)
+          ├── Backend API (/api/admin*, /api/donations, ...)
+          └── Admin Panel (/admin)
     ↓
-Render.com (Web Service — single Node.js process)
-    ├── Frontend (static files served by Express)
-    ├── Backend API (/api/*)
-    └── Admin Panel (/admin)
+PostgreSQL (Supabase — simple hôte; pas de SDK Supabase, pas de RLS)
     ↓
-PostgreSQL (Render Managed Database or Supabase)
-    ↓
-Stripe / Flutterwave / Paystack (Payment Providers)
+Stripe (TEST) / Flutterwave / Paystack (Payment Providers)
 ```
 
-**Why Render?**
-- Single platform for frontend + backend (no separate hosting needed)
-- Native Node.js support with `render.yaml`
-- Managed PostgreSQL included
-- Free tier available for testing
-- Automatic SSL certificates
-- Git-based deployment (push to deploy)
+**Pourquoi ce découpage?**
+- Le webhook Stripe officiel est hébergé en **serverless Vercel** (`frontend/api/webhooks/stripe.js`) — aucun Render, aucune URL `BACKEND_URL` requise par le frontend.
+- L'Express (Render) sert **uniquement** l'admin JWT et l'API de contenu ; son webhook `/api/webhooks/stripe` répond **410 Gone** (déplacé) pour empêcher tout double traitement.
+- PostgreSQL hébergé sur Supabase : simple DSN `postgresql://…` (transaction pooler pour le serverless, `DIRECT_URL` pour les migrations).
+- Clés Stripe **TEST uniquement** (`sk_test_` / `pk_test_`) tant que le go-live n'est pas validé : l'API **rejette** les clés LIVE (`assertTestMode`).
 
 ---
 
@@ -83,14 +82,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 1. Go to https://dashboard.stripe.com
 2. Get API keys from Developers → API Keys
-3. Set `STRIPE_SECRET_KEY` (starts with `sk_live_`)
-4. Set `STRIPE_PUBLISHABLE_KEY` (starts with `pk_live_`)
+3. Set `STRIPE_SECRET_KEY` (starts with `sk_test_` — mode TEST uniquement; les clés `sk_live_` sont rejetées par l'API)
+4. Set `STRIPE_PUBLISHABLE_KEY` (starts with `pk_test_`)
 5. Create webhook endpoint:
-   - URL: `https://humanit-aid.org/api/webhooks/stripe`
-   - Events: `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed`
+   - URL: `https://www.humanit-aid.org/api/webhooks/stripe`
+   - Events: `checkout.session.completed` (les autres événements reçus sont ignorés)
 6. Copy webhook signing secret to `STRIPE_WEBHOOK_SECRET`
 
-## Step 5: Deploy to Render
+## Step 5: Deploy to Render (Express — admin)
 
 ### Option A: Render Blueprint (Recommended)
 
@@ -133,31 +132,31 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ## Step 8: Run Database Migrations
 
 ```bash
-# If using Render, connect to your database and run schema.sql
-# Or use the Render shell to run:
-psql $DATABASE_URL < database/schema.sql
+# Connect to your database and apply schema, then migrations:
+psql "$DATABASE_URL" < database/schema.sql
+psql "$DIRECT_URL" < database/migrations/001_stripe_webhook_idempotency.sql
 ```
 
-## Step 9: Create Admin User
+> Après `schema.sql`, **toujours** appliquer `database/migrations/001_stripe_webhook_idempotency.sql`
+> (colonne `event_id` + index uniques d'idempotence). Le compte admin seed de `schema.sql`
+> est désactivé : son vrai mot de passe est posé au 1er démarrage par
+> `backend/services/bootstrapAdmin.js` (Phase suivante).
 
-```bash
-# Connect to your database and insert the admin user
-psql $DATABASE_UUID << 'SQL'
-INSERT INTO users (email, name, password_hash, role)
-VALUES (
-  'admin@humanit-aid.org',
-  'Admin HumanitAID',
-  '$(node -e "const bcrypt = require('bcryptjs'); console.log(bcrypt.hashSync('YOUR_STRONG_PASSWORD', 12))")',
-  'super_admin'
-)
-ON CONFLICT (email) DO NOTHING;
-SQL
-```
+## Step 9: Bootstrap Admin User
+
+Le compte admin est initialisé automatiquement au démarrage du serveur Express
+(`backend/services/bootstrapAdmin.js`), plus besoin d'INSERT manuel :
+
+1. Définir `ADMIN_DEFAULT_PASSWORD` (≥ 12 caractères, non-placeholder) dans l'environnement de production.
+2. Au premier boot, si le compte seed est présent, son hash est remplacé par celui de ce mot de passe ;
+   si le compte est absent, il est créé (super_admin).
+3. Le serveur **refuse de démarrer** en production si `ADMIN_DEFAULT_PASSWORD` est manquant ou faible.
+4. Le mot de passe n'est jamais loggé ni renvoyé par une API.
 
 ## Step 10: Test Everything
 
-1. Visit `https://humanit-aid.org` — homepage loads
-2. Visit `https://humanit-aid.org/admin` — admin login works
+1. Visit `https://www.humanit-aid.org` — homepage loads
+2. Visit `https://www.humanit-aid.org/admin` — admin login works
 3. Test donation flow with Stripe test card: `4242 4242 4242 4242`
 4. Check `/api/health` returns `{"status":"ok"}`
 5. Test on mobile device
@@ -190,8 +189,8 @@ If something goes wrong:
 | `DATABASE_URL` | Yes | `postgresql://...` |
 | `CORS_ORIGIN` | Yes | `https://www.humanit-aid.org` |
 | `SITE_URL` | Yes | `https://www.humanit-aid.org` |
-| `STRIPE_SECRET_KEY` | Yes | `sk_live_...` |
-| `STRIPE_PUBLISHABLE_KEY` | Yes | `pk_live_...` |
+| `STRIPE_SECRET_KEY` | Yes | `sk_test_...` |
+| `STRIPE_PUBLISHABLE_KEY` | Yes | `pk_test_...` |
 | `STRIPE_WEBHOOK_SECRET` | Yes | `whsec_...` |
 | `EMAIL_API_KEY` | Recommended | `SG...` |
 | `EMAIL_FROM` | Recommended | `noreply@humanit-aid.org` |

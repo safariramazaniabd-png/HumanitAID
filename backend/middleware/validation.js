@@ -62,7 +62,7 @@ function validateDonation(body) {
   if (currency && !allowedCurrencies.includes(currency)) {
     errors.push('Devise non supportée');
   }
-  const allowedMethods = ['stripe', 'flutterwave', 'paystack', 'wire'];
+  const allowedMethods = ['stripe', 'flutterwave', 'paystack', 'wire', 'mpesa', 'airtel', 'orange', 'wave'];
   if (method && !allowedMethods.includes(method)) {
     errors.push('Méthode de paiement non supportée');
   }

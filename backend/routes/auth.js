@@ -31,7 +31,7 @@ router.post('/login', authLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Email et mot de passe requis' });
   }
 
-  if (env.demoMode) {
+  if (env.demoMode && process.env.NODE_ENV !== 'production') {
     if (email === 'admin@humanit-aid.org' && password === 'admin') {
       const token = signToken(DEMO_ADMIN);
       return res.json({ token, user: DEMO_ADMIN });

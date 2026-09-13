@@ -557,13 +557,17 @@ INSERT INTO settings (key, value, type, category, description) VALUES
 
 -- ============================================================================
 -- SEED DATA: Default admin user
--- Password: changeme123  (bcrypt — change immediately!)
+-- Compte d'amorçage DÉSACTIVÉ : le hash ci-dessous est celui d'une sentinelle
+-- (aucun mot de passe réel). Au 1er démarrage hors mode démo, le boostrap
+-- (backend/services/bootstrapAdmin.js) le remplace par le mot de passe fourni
+-- via ADMIN_DEFAULT_PASSWORD. En production, le serveur refuse de démarrer si
+-- ADMIN_DEFAULT_PASSWORD est manquant/faible.
 -- ============================================================================
 
 INSERT INTO users (id, email, password_hash, name, role, is_active) VALUES
     ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
      'admin@humanit-aid.org',
-     '$2b$12$LJ3m4ys3Lz0YBLCzFhRreuhFGfK.GH2XjHJG8XzOhH1m2c5S3Z5Y.',
+     '$2a$12$k27wZEMhOf5tvgj9wzkzG.ZfWZGxiT/iI4EwVMRPjVarISVvphVLW',
      'Super Administrateur',
      'super_admin',
      true);

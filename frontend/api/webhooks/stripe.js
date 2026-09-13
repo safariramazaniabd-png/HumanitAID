@@ -179,12 +179,29 @@ module.exports = async function stripeWebhook(req, res) {
     pool = new Pool(buildPgOptions(databaseUrl));
 
     try {
+      const already = await pool.query(
+        'SELECT 1 FROM webhook_events WHERE event_id = $1 LIMIT 1',
+        [event.id]
+      );
+      if (already.rows.length) {
+        console.log(`[webhooks/stripe] Événement ${event.id} déjà traité (rejeu).`);
+        return res.status(200).json({ received: true, deduplicated: true });
+      }
+    } catch (err) {
+      console.error('[webhooks/stripe] Vérification de rejeu impossible:', redact(err.message));
+    }
+
+    try {
       await pool.query(
-        `INSERT INTO webhook_events (provider, event_type, payload, processed)
-         VALUES ('stripe', $1, $2, $3)`,
-        [event.type, JSON.stringify(event.data ? event.data.object : {}), false]
+        `INSERT INTO webhook_events (provider, event_type, event_id, payload, processed)
+         VALUES ('stripe', $1, $2, $3, false)`,
+        [event.type, event.id, JSON.stringify(event.data ? event.data.object : {})]
       );
     } catch (err) {
+      if (err.code === '23505') {
+        console.log(`[webhooks/stripe] Événement ${event.id} déjà journalisé (course).`);
+        return res.status(200).json({ received: true, deduplicated: true });
+      }
       console.error('[webhooks/stripe] Journalisation impossible:', redact(err.message));
     }
 

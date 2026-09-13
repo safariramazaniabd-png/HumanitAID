@@ -10,24 +10,25 @@
 - [ ] `DATABASE_URL` points to production PostgreSQL (with `sslmode=require`)
 - [ ] `CORS_ORIGIN` = `https://www.humanit-aid.org,https://humanit-aid.org`
 - [ ] `SITE_URL` = `https://www.humanit-aid.org`
-- [ ] `ADMIN_URL` = `https://humanit-aid.org/admin`
+- [ ] `ADMIN_URL` = `https://www.humanit-aid.org/admin`
 - [ ] No real secrets committed to git (verify with `git log -p`)
 
 ### Database
 - [ ] PostgreSQL provisioned (Supabase, Railway, or Render)
 - [ ] `uuid-ossp` extension enabled: `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
 - [ ] `schema.sql` executed
-- [ ] Admin user created via seed or first registration
+- [ ] `database/migrations/001_stripe_webhook_idempotency.sql` executed (`event_id` + index uniques)
+- [ ] Admin user initialized au 1er boot via `ADMIN_DEFAULT_PASSWORD` (bootstrapAdmin.js)
 - [ ] Connection pooling configured (PgBouncer or built-in)
 - [ ] Backups enabled (daily minimum)
 
 ### Payments — Stripe
 - [ ] Stripe account created and verified
-- [ ] `STRIPE_SECRET_KEY` = `sk_live_...` set
-- [ ] `STRIPE_PUBLISHABLE_KEY` = `pk_live_...` set
+- [ ] `STRIPE_SECRET_KEY` = `sk_test_...` set (les clés `sk_live_` sont rejetées tant que le go-live n'est pas validé)
+- [ ] `STRIPE_PUBLISHABLE_KEY` = `pk_test_...` set
 - [ ] `STRIPE_WEBHOOK_SECRET` = `whsec_...` set
-- [ ] Webhook endpoint registered: `https://humanit-aid.org/api/webhooks/stripe`
-- [ ] Webhook events: `checkout.session.completed`, `payment_intent.succeeded`, `payment_intent.payment_failed`
+- [ ] Webhook endpoint registered: `https://www.humanit-aid.org/api/webhooks/stripe`
+- [ ] Webhook events: `checkout.session.completed` (les autres événements reçus sont ignorés)
 - [ ] Test mode payments verified before switching to live keys
 
 ### Payments — Mobile Money (Optional)
@@ -47,7 +48,7 @@
 - [ ] CSP headers enabled (production mode)
 - [ ] HSTS enabled (production mode)
 - [ ] HTTPS enforced (HSTS preload)
-- [ ] Rate limiting active (auth: 20/15min, general: 200/15min)
+- [ ] Rate limiting active (auth: 20/15min, general: 600/15min)
 - [ ] File upload limits enforced (10MB max)
 - [ ] Input validation on all POST endpoints
 - [ ] CORS restricted to production origins only
