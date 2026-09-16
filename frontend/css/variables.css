@@ -19,11 +19,14 @@
 
   /* ═══ Semantic color tokens ═══ */
   --background: var(--noir);
+  --bg-primary: var(--noir);
   --surface: var(--noir-doux);
   --surface-elevated: var(--gris-fonce);
+  --bg-card: var(--gris-fonce);
   --text-primary: var(--blanc);
   --text-secondary: var(--gris-clair);
   --text-muted: var(--gris);
+  --rouge-fade: rgba(192, 57, 43, 0.15);
   --border-subtle: rgba(212, 168, 67, 0.15);
   --border-default: rgba(212, 168, 67, 0.25);
   --border-strong: rgba(212, 168, 67, 0.4);
@@ -68,23 +71,23 @@
   --text-6xl: 48px;
 
   /* Named size tokens (kept for compatibility, mapped to scale) */
-  --fs-hero: clamp(40px, 5vw, 60px);
-  --fs-section-title: clamp(32px, 4vw, 48px);
+  --fs-hero: clamp(32px, 4.5vw, 48px);
+  --fs-section-title: clamp(26px, 3.2vw, 32px);
   --fs-citation: clamp(22px, 3vw, 32px);
-  --fs-body: var(--text-lg);
-  --fs-body-lg: var(--text-xl);
+  --fs-body: var(--text-base);
+  --fs-body-lg: var(--text-lg);
   --fs-card-title: var(--text-xl);
   --fs-card-title-lg: var(--text-2xl);
   --fs-card-desc: var(--text-ui);
   --fs-card-desc-sm: var(--text-sm);
-  --fs-stat-num: var(--text-5xl);
-  --fs-stat-label: 11px;
+  --fs-stat-num: var(--text-3xl);
+  --fs-stat-label: 12px;
   --fs-nav-link: 13px;
   --fs-ticker: var(--text-xs);
   --fs-btn: var(--text-sm);
   --fs-btn-lg: var(--text-ui);
-  --fs-label: 11px;
-  --fs-badge: 11px;
+  --fs-label: 12px;
+  --fs-badge: 12px;
   --fs-modal-title: var(--text-3xl);
   --fs-modal-amount: var(--text-4xl);
   --fs-footer-logo: var(--text-3xl);
@@ -163,6 +166,7 @@
   --text-primary: #1A1A1A;
   --text-secondary: #4A4A4A;
   --text-muted: #8A8A8A;
+  --rouge-fade: rgba(192, 57, 43, 0.08);
   --border-subtle: rgba(0, 0, 0, 0.08);
   --border-default: rgba(0, 0, 0, 0.15);
   --border-strong: rgba(0, 0, 0, 0.25);

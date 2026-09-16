@@ -33,10 +33,6 @@
     right: 40px;
   }
 
-  .cause-card {
-    height: 360px;
-  }
-
   .temoignages-grid {
     gap: 20px;
   }
@@ -57,6 +53,10 @@
     padding: 0 var(--section-padding-x-mobile);
   }
 
+  .nav-logo {
+    margin-right: auto;
+  }
+
   .nav-links {
     display: none;
   }
@@ -69,15 +69,12 @@
     display: flex;
   }
 
-  .theme-switcher {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 998;
-    background: var(--bg-card);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    padding: 4px;
+  .main-nav > .theme-switcher {
+    display: none;
+  }
+
+  .theme-switcher-mobile {
+    display: flex;
   }
 
   .hero-content {
@@ -112,8 +109,8 @@
     grid-template-columns: 1fr;
   }
 
-  .cause-card:nth-child(1) {
-    grid-column: span 1;
+  .cause-card--featured {
+    grid-column: auto;
   }
 
   .temoignages-grid {
@@ -167,11 +164,11 @@
 
 @media (max-width: 768px) {
   .hero-title {
-    font-size: clamp(32px, 5vw, 56px);
+    font-size: clamp(28px, 6vw, 36px);
   }
 
   .hero-caption {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .hero-btns {
@@ -185,7 +182,7 @@
   }
 
   .stat-num {
-    font-size: 36px;
+    font-size: 24px;
   }
 
   .don-form {
@@ -221,8 +218,18 @@
     padding: 0 16px;
   }
 
-  .nav-logo {
-    font-size: 22px;
+  .lang-switcher {
+    margin-left: 8px;
+    padding: 5px 6px;
+  }
+
+  .nav-logo .logo-symbol {
+    width: 26px;
+    height: 26px;
+  }
+
+  .logo-word {
+    font-size: 17px;
   }
 
   .hero-content {
@@ -242,15 +249,15 @@
   }
 
   .stat-item {
-    padding: 24px 16px;
+    padding: 20px 16px;
   }
 
   .stat-num {
-    font-size: 28px;
+    font-size: 22px;
   }
 
   .stat-label {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .progress-card {
@@ -259,10 +266,6 @@
 
   .amount-btns {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .cause-card {
-    height: 300px;
   }
 
   .cause-name {
@@ -282,8 +285,14 @@
     font-size: 11px;
   }
 
+  .footer-bottom-links {
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    justify-content: center;
+  }
+
   .cta-title {
-    font-size: clamp(24px, 6vw, 40px);
+    font-size: clamp(22px, 5.5vw, 30px);
   }
 
   .don-form {
@@ -301,5 +310,28 @@
 
   .story-card {
     min-width: 260px;
+  }
+}
+
+/* ── 360px: small phones ── */
+
+@media (max-width: 360px) {
+  .payment-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .payment-tab {
+    border-right: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .payment-tab:nth-child(3) {
+    grid-column: span 2;
+  }
+
+  .payment-tab:last-child {
+    border-right: none;
+    border-bottom: none;
   }
 }

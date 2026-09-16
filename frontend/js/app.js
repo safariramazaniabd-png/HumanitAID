@@ -25,6 +25,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   initCitations();
   initFAQ();
   initAnimations();
+
+  document.addEventListener('ha:langchange', () => {
+    loadStats();
+    loadCauses();
+    loadCausesGrid();
+    loadPublications();
+    loadTestimonials();
+    loadNews();
+  });
 });
 
 /* ── FOOTER YEAR ── */
@@ -43,6 +52,8 @@ function initHamburger() {
   const mobileClose = document.querySelector('.mobile-close');
   if (!hamburger || !mobileMenu) return;
 
+  const focusables = () => Array.from(mobileMenu.querySelectorAll('a, button:not([disabled])'));
+
   function openMenu() {
     hamburger.classList.add('open');
     hamburger.setAttribute('aria-expanded', 'true');
@@ -50,6 +61,8 @@ function initHamburger() {
     mobileMenu.setAttribute('aria-hidden', 'false');
     if (mobileOverlay) mobileOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+    const first = focusables()[0];
+    if (first) first.focus();
   }
 
   function closeMenu() {
@@ -59,6 +72,7 @@ function initHamburger() {
     mobileMenu.setAttribute('aria-hidden', 'true');
     if (mobileOverlay) mobileOverlay.classList.remove('open');
     document.body.style.overflow = '';
+    hamburger.focus();
   }
 
   hamburger.addEventListener('click', () => {
@@ -78,6 +92,12 @@ function initHamburger() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+      closeMenu();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 900 && mobileMenu.classList.contains('open')) {
       closeMenu();
     }
   });
@@ -101,6 +121,10 @@ function initSmoothScroll() {
 
 /* ── ANIMATED COUNTERS ── */
 
+function localeNumber() {
+  return I18N.lang === 'fr' ? 'fr-FR' : I18N.lang === 'es' ? 'es-ES' : 'en-US';
+}
+
 function animateCount(el, target, prefix = '') {
   const dur = 2200;
   const step = 20;
@@ -108,7 +132,7 @@ function animateCount(el, target, prefix = '') {
   let current = 0;
   const timer = setInterval(() => {
     current = Math.min(current + increment, target);
-    el.textContent = prefix + Math.round(current).toLocaleString('fr-FR');
+    el.textContent = prefix + Math.round(current).toLocaleString(localeNumber());
     if (current >= target) clearInterval(timer);
   }, step);
 }
@@ -117,46 +141,65 @@ function animateCount(el, target, prefix = '') {
 
 async function loadStats() {
   const stats = await fetchStats();
-  const displaced = document.getElementById('stat-displaced');
-  const orphans = document.getElementById('stat-orphans');
-  const raised = document.getElementById('stat-raised');
-  const donors = document.getElementById('stat-donors');
+  applyStat('stat-raised', stats.raised, '$');
+  applyStat('stat-donors', stats.donors);
+}
 
-  if (displaced) displaced.dataset.count = stats.displaced;
-  if (orphans) orphans.dataset.count = stats.orphans;
-  if (raised) { raised.dataset.count = stats.raised; raised.dataset.prefix = '$'; }
-  if (donors) donors.dataset.count = stats.donors;
+function applyStat(id, value, prefix) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    el.dataset.count = value;
+    if (prefix) el.dataset.prefix = prefix;
+    return;
+  }
+  const item = el.closest('.stat-item');
+  if (item) item.style.display = 'none';
+}
+
+let causesCache = null;
+
+async function getCauses() {
+  if (!causesCache) {
+    causesCache = await fetchCauses();
+  }
+  return causesCache;
 }
 
 /* ── LOAD CAUSES (Progress Bars) ── */
 
 async function loadCauses() {
-  const causes = await fetchCauses();
+  const causes = await getCauses();
   const grid = document.getElementById('progress-grid');
   if (!grid) return;
 
   grid.innerHTML = '';
   causes.forEach((cause, i) => {
-    const pct = Math.round((cause.collected / cause.goal) * 100);
+    const fundable = cause.goal > 0 && cause.collected > 0;
+    const pct = fundable ? Math.round((cause.collected / cause.goal) * 100) : 0;
     const fillClass = `bar-fill-${i + 1}`;
     const delay = i % 2 === 1 ? ' fade-up-delay-1' : '';
     const full = i === causes.length - 1 && causes.length % 2 === 1 ? ' progress-card-full' : '';
+    const amountsBlock = fundable
+      ? `
+        <div class="amounts">
+          <span class="amount-raised">$${cause.collected.toLocaleString()}</span>
+          <span class="amount-goal">${I18N.t('collectes.goal')} : $${cause.goal.toLocaleString()}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill ${fillClass}" data-target="${pct}"></div></div>
+        <div class="bar-stats">
+          <span class="pct">${pct}%</span>
+          ${typeof cause.donors === 'number' ? `<span>${I18N.t('causes.donors', { n: cause.donors.toLocaleString(localeNumber()) })}</span>` : ''}
+          ${typeof cause.daysLeft === 'number' ? `<span>${cause.daysLeft} ${I18N.t('collectes.daysLeft')}</span>` : ''}
+        </div>`
+      : '';
 
     grid.innerHTML += `
       <div class="progress-card fade-up${delay}${full}">
         <div class="card-icon">${humanIcon(cause.icon)}</div>
         <div class="card-title">${cause.title}</div>
         <div class="card-desc">${cause.description}</div>
-        <div class="amounts">
-          <span class="amount-raised">$${cause.collected.toLocaleString()}</span>
-          <span class="amount-goal">Objectif : $${cause.goal.toLocaleString()}</span>
-        </div>
-        <div class="bar-track"><div class="bar-fill ${fillClass}" data-target="${pct}"></div></div>
-        <div class="bar-stats">
-          <span class="pct">${pct}%</span>
-          <span>${(cause.donors || 0).toLocaleString()} donateurs</span>
-          <span>${(cause.daysLeft || 0)} jours restants</span>
-        </div>
+        ${amountsBlock}
       </div>
     `;
   });
@@ -167,59 +210,77 @@ async function loadCauses() {
 /* ── LOAD CAUSES GRID (Visual Cards) ── */
 
 async function loadCausesGrid() {
-  const causes = await fetchCauses();
+  const causes = await getCauses();
   const grid = document.getElementById('causes-grid');
   if (!grid) return;
 
   grid.innerHTML = '';
-  causes.forEach((cause) => {
-    const bgStyle = cause.image
-      ? `style="background-image:linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.15)), url('${cause.image}')"`
+  causes.forEach((cause, i) => {
+    const fundable = cause.goal > 0 && cause.collected > 0;
+    const pct = fundable ? Math.round((cause.collected / cause.goal) * 100) : 0;
+    const media = cause.image
+      ? `<img class="cause-media-img" src="${escHtml(cause.image)}" alt="${escHtml(cause.title)}" loading="lazy">`
+      : humanIcon(cause.icon);
+    const linkLabel = cause.link || I18N.t('causes.link');
+    const amountsBlock = fundable
+      ? `
+          <div class="amounts">
+            <span class="amount-raised">$${cause.collected.toLocaleString()}</span>
+            <span class="amount-goal">${I18N.t('collectes.goal')} : $${cause.goal.toLocaleString()}</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill bar-fill-${i + 1}" data-target="${pct}"></div></div>
+          <div class="bar-stats">
+            <span class="pct">${pct}%</span>
+            ${typeof cause.donors === 'number' ? `<span>${I18N.t('causes.donors', { n: cause.donors.toLocaleString(localeNumber()) })}</span>` : ''}
+          </div>`
       : '';
+
     grid.innerHTML += `
-      <div class="cause-card">
-        <div class="cause-bg ${cause.bgClass}" ${bgStyle}>
-          <div class="cause-emoji" aria-hidden="true">${humanIcon(cause.icon)}</div>
+      <article class="cause-card${i === 0 ? ' cause-card--featured' : ''}">
+        <div class="cause-media">
+          ${media}
+          <span class="cause-index">${String(i + 1).padStart(2, '0')}</span>
+          <span class="cause-tag">${I18N.t('causes.priority', { n: i + 1 })}</span>
         </div>
-        <div class="cause-overlay">
-          <span class="cause-tag">${cause.priority}</span>
-          <div class="cause-name">${cause.title}</div>
-          <div class="cause-desc">${cause.detail}</div>
-          <a href="#donner" class="cause-link">${cause.link}</a>
+        <div class="cause-body">
+          <h3 class="cause-name">${cause.title}</h3>
+          <p class="cause-desc">${cause.description}</p>
+          ${amountsBlock}
+          <a href="#donner" class="cause-link">${linkLabel}</a>
         </div>
-      </div>
+      </article>
     `;
   });
+
+  reInitObserver();
 }
 
 /* ── LOAD STORIES CAROUSEL ── */
 
 async function loadStoriesCarousel() {
-  const data = await fetchSlides();
   const track = document.getElementById('stories-track');
   if (!track) return;
 
-  const stories = [
-    { title: 'Le camp de Bulengo déborde — 12 000 personnes sans abri', category: 'Déplacement', icon: 'tent', image: '/assets/images/305274.HR_.jpg', excerpt: 'Les nouvelles arrivées de déplacés du Nord-Kivu affluxent chaque jour. Les conditions sanitaires se détériorent.', date: 'Avril 2025' },
-    { title: 'Grâce retrouve l\'espoir grâce à l\'éducation', category: 'Éducation', icon: 'education', image: '/assets/images/eedddb3cfc96d84d68876a35a0389d52.jpg', excerpt: 'Une école de fortune a été créée dans le camp. 200 enfants fréquentent chaque jour malgré tout.', date: 'Mars 2025' },
-    { title: 'Centre médical mobile opère en zone hostile', category: 'Santé', icon: 'medical', image: '/assets/images/4c8a870b8cb8ef771a49d2292ec067e9.jpg', excerpt: 'Notre équipe mobile a réalisé 1 200 consultations en 2 semaines dans des zones inaccessibles.', date: 'Mars 2025' },
-    { title: 'Distribution d\'eau potable — 8 000 personnes servies', category: 'Eau & Hygiène', icon: 'water', image: '/assets/images/ad8214043dacc9fdd2db955958838b0b.jpg', excerpt: 'Des réservoirs d\'eau ont été installés dans 3 camps du Sud-Kivu, réduisant les maladies hydriques.', date: 'Février 2025' },
-    { title: '320 fauteuils roulants distribués aux handicapés de guerre', category: 'Inclusion', icon: 'wheelchair', image: '/assets/images/MSB160469.jpg', excerpt: 'Chaque fauteuil est adapté individuellement. La mobilité redonne la dignité et l\'autonomie.', date: 'Février 2025' },
-  ];
+  const stories = await fetchFieldStories();
+  if (!stories.length) {
+    const section = document.getElementById('stories');
+    if (section) section.style.display = 'none';
+    return;
+  }
 
   track.innerHTML = '';
   stories.forEach((s) => {
     track.innerHTML += `
-      <div class="story-card">
+      <div class="story-card" data-story-id="${escHtml(s.id)}">
         <div class="story-card-inner">
           <div class="story-img">
-            ${s.image ? `<img src="${s.image}" alt="${escHtml(s.title)}" loading="lazy">` : humanIcon(s.icon)}
+            ${s.image ? `<img src="${escHtml(s.image)}" alt="${escHtml(s.title)}" loading="lazy">` : humanIcon('document')}
           </div>
           <div class="story-body">
-            <p class="story-category">${s.category}</p>
-            <h3 class="story-title">${s.title}</h3>
-            <p class="story-excerpt">${s.excerpt}</p>
-            <p class="story-date">${s.date}</p>
+            <p class="story-category">${escHtml(s.category)}</p>
+            <h3 class="story-title">${escHtml(s.title)}</h3>
+            <p class="story-excerpt">${escHtml(s.excerpt)}</p>
+            <p class="story-date">${escHtml(s.date)}</p>
           </div>
         </div>
       </div>
@@ -236,6 +297,7 @@ async function loadPublications() {
   const pubs = await fetchPublications();
   const feed = document.getElementById('publications-feed');
   if (!feed) return;
+  if (!pubs.length) return;
 
   feed.innerHTML = '';
   pubs.forEach((p) => {
@@ -262,24 +324,28 @@ async function loadTestimonials() {
   const data = await fetchTestimonials();
   const grid = document.getElementById('temoignages-grid');
   if (!grid) return;
+  if (!data.length) return;
 
   grid.innerHTML = '';
   data.forEach((t, i) => {
     const catClass = 'cat-' + t.category;
     const delays = ['', ' fade-up-delay-1', ' fade-up-delay-2'];
     const delay = delays[i % 3];
-
-    grid.innerHTML += `
-      <div class="temoignage-card fade-up${delay}">
-        <span class="temoignage-cat ${catClass}">${t.categoryLabel}</span>
-        <p class="temoignage-text">${t.text}</p>
-        <div class="temoignage-author">
+    const authorBlock = t.author
+      ? `<div class="temoignage-author">
           <div class="author-avatar">${humanIcon(t.avatar)}</div>
           <div>
             <div class="author-name">${t.author}</div>
-            <div class="author-loc">${t.location} · ${t.date}</div>
+            <div class="author-loc">${[t.location, t.date].filter(Boolean).join(' · ')}</div>
           </div>
-        </div>
+        </div>`
+      : '';
+
+    grid.innerHTML += `
+      <div class="temoignage-card fade-up${delay}">
+        <span class="temoignage-cat ${catClass}">${escHtml(I18N.t('tcat.' + t.category))}</span>
+        <p class="temoignage-text">${t.text}</p>
+        ${authorBlock}
       </div>
     `;
   });
@@ -293,6 +359,7 @@ async function loadNews() {
   const data = await fetchNews();
   const layout = document.getElementById('news-layout');
   if (!layout) return;
+  if (!data.length) return;
 
   const featured = data.find((n) => n.featured) || data[0];
   const sidebar = data.filter((n) => n.id !== featured.id).slice(0, 6);
@@ -334,6 +401,11 @@ async function loadPartners() {
   const data = await fetchPartners();
   const grid = document.getElementById('partners-grid');
   if (!grid) return;
+  if (!data.length) {
+    const section = grid.closest('section');
+    if (section) section.style.display = 'none';
+    return;
+  }
 
   grid.innerHTML = '';
   data.forEach((p) => {
@@ -345,10 +417,10 @@ async function loadPartners() {
 
 function initCitations() {
   const citations = [
-    { text: '« Injustice anywhere is a threat to justice everywhere. »', author: '— Martin Luther King Jr.' },
-    { text: '« Si vous ne pouvez pas nourrir cent personnes, nourrissez-en une seule. »', author: '— Mère Teresa' },
-    { text: '« La vie d\'un seul homme vaut autant que celle de toute l\'humanité. »', author: '— Albert Einstein' },
-    { text: '« Un enfant, un enseignant, un livre, un stylo peuvent changer le monde. »', author: '— Malala Yousafzai' },
+    { text: 'cit.c1.text', author: 'cit.c1.author' },
+    { text: 'cit.c2.text', author: 'cit.c2.author' },
+    { text: 'cit.c3.text', author: 'cit.c3.author' },
+    { text: 'cit.c4.text', author: 'cit.c4.author' },
   ];
 
   let citIndex = 0;
@@ -363,16 +435,20 @@ function initCitations() {
     citAuth.style.opacity = '0';
     setTimeout(() => {
       citIndex = i;
-      citText.textContent = citations[i].text;
-      citAuth.textContent = citations[i].author;
+      citText.textContent = I18N.t(citations[i].text);
+      citAuth.textContent = I18N.t(citations[i].author);
       citText.style.opacity = '1';
       citAuth.style.opacity = '1';
-      citDots.forEach((d, j) => d.classList.toggle('active', j === i));
+      citDots.forEach((d, j) => {
+        d.classList.toggle('active', j === i);
+        d.setAttribute('aria-label', I18N.t('cit.dot', { n: j + 1 }));
+      });
     }, 400);
   }
 
   citDots.forEach((d, i) => d.addEventListener('click', () => setCitation(i)));
   setInterval(() => setCitation((citIndex + 1) % citations.length), 6000);
+  document.addEventListener('ha:langchange', () => setCitation(citIndex));
 }
 
 /* ── FAQ ACCORDION ── */
@@ -453,12 +529,12 @@ function reInitObserver() {
 }
 
 function registerServiceWorker() {
-  if ('serviceWorker' in navigator && location.protocol !== 'http:') return;
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    });
-  }
+  if (!('serviceWorker' in navigator)) return;
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (location.protocol !== 'https:' && !isLocal) return;
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
 }
 
 registerServiceWorker();

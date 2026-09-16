@@ -620,40 +620,13 @@ INSERT INTO categories (name, slug, type, display_order) VALUES
     ('Field Worker',               'field-worker',         'testimonial',  5);
 
 -- ============================================================================
--- SEED DATA: Default causes (from constants.js)
+-- SEED DATA: Default causes
+-- Les causes et objectifs de collecte sont créés par l'administrateur.
+-- Aucune donnée fictive n'est insérée dans le schema.
 -- ============================================================================
-
-INSERT INTO causes (slug, title, description, goal, collected, status, display_order) VALUES
-    ('deplaces',   'Déplacés & Réfugiés de guerre',
-     'Soutien aux millions de personnes déplacées de force dans l''Est de la RDC.',
-     500000.00, 347000.00, 'active', 1),
-
-    ('orphelins',  'Enfants orphelins en zones de conflit',
-     'Protection et éducation pour les enfants ayant perdu leurs parents.',
-     300000.00, 198000.00, 'active', 2),
-
-    ('veuves',     'Veuves & Femmes survivantes de violences',
-     'Accompagnement psychosocial et soutien économique pour les femmes survivantes.',
-     250000.00, 156000.00, 'active', 3),
-
-    ('victimes',   'Victimes de violences armées',
-     'Soins médicaux d''urgence et réhabilitation pour les victimes.',
-     400000.00, 223000.00, 'active', 4),
-
-    ('handicapes', 'Personnes handicapées en zones de guerre',
-     'Accessibilité, réhabilitation et inclusion pour les personnes handicapées.',
-     200000.00, 112000.00, 'active', 5);
 
 -- ============================================================================
 -- SEED DATA: Default impact metrics
+-- Les métriques d'impact sont saisies manuellement par l'administrateur.
+-- Aucune donnée fictive n'est insérée dans le schema.
 -- ============================================================================
-
-INSERT INTO impact_metrics (metric_name, metric_value, metric_unit, period, year) VALUES
-    ('beneficiaries_reached',   125000, 'people',  '2024', 2024),
-    ('meals_distributed',       580000, 'meals',   '2024', 2024),
-    ('medical_consultations',    34000, 'visits',  '2024', 2024),
-    ('children_educated',         8500, 'students','2024', 2024),
-    ('shelters_built',            1200, 'units',   '2024', 2024),
-    ('water_points',               85, 'points',  '2024', 2024),
-    ('volunteers_active',         320, 'people',  '2024', 2024),
-    ('partner_organizations',      45, 'orgs',    '2024', 2024);
