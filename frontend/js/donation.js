@@ -13,7 +13,31 @@ const DonationForm = {
     this.bindProviderButtons();
     this.bindSubmit();
     this.bindModal();
+    this.bindCauseCards();
     this.handleCheckoutReturn();
+  },
+
+  // Propage la cause cliquée sur une carte (#causes-grid) vers le <select>
+  // du formulaire de donation, avant que le lien #donner ne fasse défiler
+  // la page. Sans ça, toute donation partait avec cause="toutes" quelle
+  // que soit la carte cliquée.
+  bindCauseCards() {
+    const grid = document.getElementById('causes-grid');
+    if (!grid) return;
+    grid.addEventListener('click', (e) => {
+      const link = e.target.closest('.cause-link');
+      if (!link) return;
+      const card = link.closest('[data-cause]');
+      const slug = card && card.dataset.cause;
+      if (!slug) return;
+      const select = document.getElementById('causeSelect');
+      if (!select) return;
+      const hasOption = Array.from(select.options).some((opt) => opt.value === slug);
+      if (hasOption) {
+        select.value = slug;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
   },
 
   handleCheckoutReturn() {

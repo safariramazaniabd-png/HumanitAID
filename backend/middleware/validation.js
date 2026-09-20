@@ -10,6 +10,10 @@ const MIN_PASSWORD = 8;
 const MAX_MESSAGE = 2000;
 const MAX_URL = 2048;
 const MAX_DONATION_AMOUNT = 1000000;
+const MAX_POST_TITLE = 500;
+const MAX_POST_SUMMARY = 500;
+const MAX_POST_SLUG = 200;
+const MAX_POST_SEO_TITLE = 255;
 
 function sanitize(str) {
   if (typeof str !== 'string') return '';
@@ -75,21 +79,92 @@ function validateDonation(body) {
 
 function validatePost(body) {
   const errors = [];
-  const { title, content, type } = body;
+  const { title, slug, summary, content, status, category, cause_id, featured_image, location, is_featured, seo_title, seo_description } = body;
 
+  // Titre
   if (!title || sanitize(title).length < 3) {
     errors.push('Titre requis (min 3 caractères)');
   }
-  if (title && sanitize(title).length > MAX_TITLE) {
-    errors.push(`Titre trop long (max ${MAX_TITLE} caractères)`);
+  if (title && sanitize(title).length > MAX_POST_TITLE) {
+    errors.push(`Titre trop long (max ${MAX_POST_TITLE} caractères)`);
   }
-  if (content && sanitize(content).length > MAX_CONTENT) {
-    errors.push(`Contenu trop long (max ${MAX_CONTENT} caractères)`);
+
+  // Slug
+  if (slug) {
+    if (sanitize(slug).length < 3) {
+      errors.push('Slug requis (min 3 caractères)');
+    }
+    if (sanitize(slug).length > MAX_POST_SLUG) {
+      errors.push(`Slug trop long (max ${MAX_POST_SLUG} caractères)`);
+    }
+    // Format slug : minuscules, chiffres, tirets, pas d'espaces
+    const slugRegex = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+    if (!slugRegex.test(slug)) {
+      errors.push('Format de slug invalide (minuscules, chiffres, tirets uniquement)');
+    }
   }
-  const allowedTypes = ['article', 'report', 'update', 'press'];
-  if (type && !allowedTypes.includes(type)) {
-    errors.push('Type de publication invalide');
+
+  // Résumé
+  if (summary) {
+    if (sanitize(summary).length > MAX_POST_SUMMARY) {
+      errors.push(`Résumé trop long (max ${MAX_POST_SUMMARY} caractères)`);
+    }
   }
+
+  // Contenu
+  if (content) {
+    if (sanitize(content).length > MAX_CONTENT) {
+      errors.push(`Contenu trop long (max ${MAX_CONTENT} caractères)`);
+    }
+  }
+
+  // Statut
+  const allowedStatuses = ['draft', 'scheduled', 'published', 'archived'];
+  if (status && !allowedStatuses.includes(status)) {
+    errors.push(`Statut invalide (doit être l'un de : ${allowedStatuses.join(', ')})`);
+  }
+
+  // Catégorie
+  if (category) {
+    if (sanitize(category).length < 2) {
+      errors.push('Catégorie trop courte');
+    }
+  }
+
+  // cause_id : doit être un UUID valide ou null
+  if (cause_id !== undefined && cause_id !== null) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(String(cause_id))) {
+      errors.push('cause_id doit être un UUID valide');
+    }
+  }
+
+  // featured_image : URL optionnelle
+  if (featured_image !== undefined && featured_image !== null && featured_image !== '') {
+    try {
+      new URL(featured_image);
+    } catch {
+      errors.push('featured_image doit être une URL valide');
+    }
+  }
+
+  // is_featured : doit être un booléen si fourni
+  if (is_featured !== undefined && typeof is_featured !== 'boolean') {
+    errors.push('is_featured doit être un booléen');
+  }
+
+  // SEO titre
+  if (seo_title) {
+    if (sanitize(seo_title).length > MAX_POST_SEO_TITLE) {
+      errors.push(`Titre SEO trop long (max ${MAX_POST_SEO_TITLE} caractères)`);
+    }
+  }
+
+  // SEO description
+  if (seo_description && sanitize(seo_description).length > 1000) {
+    errors.push(`Description SEO trop longue`);
+  }
+
   return errors;
 }
 
