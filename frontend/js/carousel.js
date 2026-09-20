@@ -41,11 +41,15 @@ class Carousel {
     for (let i = 0; i < count; i++) {
       const dot = document.createElement('button');
       dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
-      dot.setAttribute('aria-label', `Diapositive ${i + 1}`);
+      dot.setAttribute('aria-label', I18N.t('carousel.dot', { n: i + 1 }));
       dot.addEventListener('click', () => this.goTo(i));
       this.dotsContainer.appendChild(dot);
     }
     this.dots = this.dotsContainer.querySelectorAll('.carousel-dot');
+    document.addEventListener('ha:langchange', () => {
+      if (!this.dots) return;
+      this.dots.forEach((d, j) => d.setAttribute('aria-label', I18N.t('carousel.dot', { n: j + 1 })));
+    });
   }
 
   getVisibleCount() {
@@ -172,8 +176,11 @@ class HeroSlideshow {
   }
 
   init(slides) {
-    this.slides = slides;
-    if (!this.els.container || slides.length === 0) return;
+    this.slides = slides || [];
+    if (!this.els.container || this.slides.length === 0) {
+      this.showEmptyState();
+      return;
+    }
 
     this.buildSlides();
     this.buildDots();
@@ -184,6 +191,13 @@ class HeroSlideshow {
     }
   }
 
+  showEmptyState() {
+    const content = document.querySelector('.hero-content');
+    if (content) content.style.display = 'none';
+    const counter = document.querySelector('.hero-counter');
+    if (counter) counter.style.display = 'none';
+  }
+
   buildSlides() {
     this.els.container.innerHTML = '';
     this.slides.forEach((slide, i) => {
@@ -191,9 +205,13 @@ class HeroSlideshow {
       div.className = `hero-slide ${slide.gradient || 'slide-' + (i + 1)}${i === 0 ? ' active' : ''}`;
       div.setAttribute('aria-hidden', i !== 0 ? 'true' : 'false');
       if (slide.image) {
-        div.style.backgroundImage = `url('${slide.image}')`;
-        div.style.backgroundSize = 'cover';
-        div.style.backgroundPosition = 'center';
+        if (i === 0) {
+          div.style.backgroundImage = `url('${slide.image}')`;
+          div.style.backgroundSize = 'cover';
+          div.style.backgroundPosition = 'center';
+        } else {
+          div.dataset.bg = slide.image;
+        }
       }
       div.innerHTML = `<div class="slide-visual" aria-hidden="true">${slide.icon ? humanIcon(slide.icon) : ''}</div>`;
       this.els.container.appendChild(div);
@@ -208,7 +226,7 @@ class HeroSlideshow {
       const dot = document.createElement('button');
       dot.className = 'hero-dot' + (i === 0 ? ' active' : '');
       dot.setAttribute('role', 'tab');
-      dot.setAttribute('aria-label', `Diapositive ${i + 1}`);
+      dot.setAttribute('aria-label', I18N.t('hero.dot', { n: i + 1 }));
       dot.addEventListener('click', () => {
         this.goTo(i);
         this.startAuto();
@@ -216,13 +234,23 @@ class HeroSlideshow {
       this.els.dotsContainer.appendChild(dot);
     });
     this.dotEls = this.els.dotsContainer.querySelectorAll('.hero-dot');
+    document.addEventListener('ha:langchange', () => {
+      if (!this.dotEls) return;
+      this.dotEls.forEach((d, i) => d.setAttribute('aria-label', I18N.t('hero.dot', { n: i + 1 })));
+    });
   }
 
   goTo(index) {
     if (this.slideEls) {
       this.slideEls.forEach((s, i) => {
-        s.classList.toggle('active', i === index);
-        s.setAttribute('aria-hidden', i !== index ? 'true' : 'false');
+        const active = i === index;
+        s.classList.toggle('active', active);
+        s.setAttribute('aria-hidden', active ? 'false' : 'true');
+        if (active && s.dataset.bg && !s.style.backgroundImage) {
+          s.style.backgroundImage = `url('${s.dataset.bg}')`;
+          s.style.backgroundSize = 'cover';
+          s.style.backgroundPosition = 'center';
+        }
       });
     }
     if (this.dotEls) {

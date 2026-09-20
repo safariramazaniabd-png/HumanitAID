@@ -13,7 +13,7 @@ const App = {
   API_BASE: window.location.port
     ? `${window.location.protocol}//${window.location.hostname}:3000/api`
     : `${window.location.origin}/api`,
-  DEMO_MODE: true,
+  DEMO_MODE: false,
   TOKEN_KEY: 'humanitaid_admin_token',
   THEME_KEY: 'humanitaid_admin_theme',
 

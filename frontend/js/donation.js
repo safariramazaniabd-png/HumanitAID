@@ -6,16 +6,6 @@ const DonationForm = {
   selectedAmount: 100,
   selectedProvider: null,
 
-  causeLabels: {
-    deplaces: 'Déplacés & réfugiés de guerre',
-    orphelins: 'Enfants orphelins',
-    veuves: 'Veuves & femmes survivantes',
-    victimes: 'Victimes de violences armées',
-    handicapes: 'Personnes handicapées',
-    toutes: 'Toutes les causes',
-    '': 'Toutes les causes',
-  },
-
   init() {
     this.bindAmountButtons();
     this.bindCustomAmount();
@@ -31,37 +21,27 @@ const DonationForm = {
     const status = params.get('donation');
     if (!status) return;
 
-    document.querySelector('.modal-demo-label')?.remove();
+    document.querySelector('.modal-notice')?.remove();
 
     if (status === 'success') {
       const ref = params.get('ref') || '';
       const amount = params.get('amount') || '';
-      const isDemo = params.get('demo') === '1';
 
-      document.getElementById('modal-amount').textContent = amount ? '$' + Number(amount).toLocaleString() : 'Paiement reçu';
-      document.getElementById('modal-cause').textContent = 'Votre paiement a bien été transmis.';
-      document.getElementById('modal-ref').textContent = 'Référence : ' + ref + (isDemo ? '' : ' — La confirmation définitive de votre don sera enregistrée après vérification du paiement.');
-
-      if (isDemo) {
-        const banner = document.querySelector('.modal-cause');
-        const label = document.createElement('div');
-        label.className = 'modal-demo-label';
-        label.style.cssText = 'font-family: var(--font-mono); font-size: var(--text-xs); color: var(--warning, #f39c12); margin-top: 8px;';
-        label.textContent = 'Mode démo — Aucun paiement réel traité.';
-        if (banner) banner.parentNode.insertBefore(label, banner.nextSibling);
-      }
+      document.getElementById('modal-amount').textContent = amount ? '$' + Number(amount).toLocaleString() : I18N.t('don.paidReceived');
+      document.getElementById('modal-cause').textContent = I18N.t('don.transmitted');
+      document.getElementById('modal-ref').textContent = I18N.t('don.ref', { ref }) + I18N.t('don.definitiveSuffix');
 
       this.openModal();
     } else if (status === 'cancelled') {
+      document.getElementById('modal-amount').textContent = I18N.t('don.cancelled.title');
+      document.getElementById('modal-cause').textContent = I18N.t('don.cancelled.notSaved');
+      document.getElementById('modal-ref').textContent = '';
       const banner = document.querySelector('.modal-cause');
       const label = document.createElement('div');
-      label.className = 'modal-demo-label';
+      label.className = 'modal-notice';
       label.style.cssText = 'font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-secondary); margin-top: 8px;';
-      label.textContent = 'Paiement annulé. Vous pouvez réessayer ou choisir un autre mode de paiement.';
+      label.textContent = I18N.t('don.cancelled.msg');
       if (banner) banner.parentNode.insertBefore(label, banner.nextSibling);
-      document.getElementById('modal-amount').textContent = 'Paiement annulé';
-      document.getElementById('modal-cause').textContent = 'Don non enregistré';
-      document.getElementById('modal-ref').textContent = '';
       this.openModal();
     }
   },
@@ -98,6 +78,11 @@ const DonationForm = {
   updateButtonAmount(val) {
     const el = document.getElementById('btn-amount');
     if (el) el.textContent = val;
+  },
+
+  setSubmitLabel(text) {
+    const el = document.querySelector('.btn-don .btn-don-label');
+    if (el) el.textContent = text;
   },
 
   bindPaymentTabs() {
@@ -146,35 +131,35 @@ const DonationForm = {
     const amount = customVal > 0 ? customVal : this.selectedAmount;
 
     if (!amount || amount < 1) {
-      alert('Veuillez choisir ou saisir un montant valide.');
+      alert(I18N.t('don.err.amount'));
       return;
     }
 
     const submitBtn = document.querySelector('.btn-don');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Traitement...';
-    }
+    this.setSubmitLabel(I18N.t('form.processing'));
+    if (submitBtn) submitBtn.disabled = true;
+
+    const resetSubmit = () => {
+      if (submitBtn) submitBtn.disabled = false;
+      this.setSubmitLabel(I18N.t('form.submit'));
+    };
 
     const causeKey = document.getElementById('causeSelect')?.value || '';
-    const causeLabel = this.causeLabels[causeKey] || 'Toutes les causes';
+    const causeLabel = I18N.t('causeopt.' + (causeKey || 'all'));
     const tab = this.getActiveTab();
     const providerName = this.selectedProvider || null;
     const method = tab === 'carte' ? (providerName || 'stripe') : tab === 'mobile' ? (providerName || 'flutterwave') : 'wire';
     const ref = 'HAD-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
 
-    let demo = false;
-    let result = null;
-
     const visiblePanel = tab === 'carte' ? 'card' : tab === 'mobile' ? 'mobile' : 'wire';
-    const p = method === 'mobile' ? {
+    const mobileDetails = tab === 'mobile' ? {
       provider: providerName,
       phone: document.getElementById('mobile-phone')?.value || '',
       name: document.getElementById('mobile-name')?.value || '',
     } : {};
 
     const donationData = {
-      donor_name: document.getElementById(visiblePanel === 'mobile' ? 'mobile-name' : visiblePanel === 'card' ? 'card-name' : 'wire-name')?.value || 'Anonyme',
+      donor_name: document.getElementById(visiblePanel === 'mobile' ? 'mobile-name' : visiblePanel === 'card' ? 'card-name' : 'wire-name')?.value || I18N.t('don.anonymous'),
       email: document.getElementById(visiblePanel === 'card' ? 'card-email' : visiblePanel === 'mobile' ? 'mobile-email' : 'wire-email')?.value || '',
       amount,
       currency: 'USD',
@@ -182,72 +167,58 @@ const DonationForm = {
       cause: causeKey || 'toutes',
       reference: ref,
       provider: providerName,
-      ...p,
+      ...mobileDetails,
     };
 
-    if (tab === 'carte' && !donationData.email) {
-      alert('Veuillez saisir votre email pour recevoir le reçu.');
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Confirmer le don';
+    if (!donationData.email) {
+      alert(I18N.t('don.err.email'));
+      resetSubmit();
       return;
     }
 
     if (tab === 'carte') {
       try {
-        const session = typeof createCheckoutSession === 'function' ? await createCheckoutSession(donationData) : { url: null, demo: true };
+        const session = typeof createCheckoutSession === 'function'
+          ? await createCheckoutSession(donationData)
+          : { url: null, error: I18N.t('don.err.network') };
         if (session && session.url) {
           window.location.href = session.url;
           return;
         }
-        if (session && session.error) {
-          alert(session.error);
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Confirmer le don';
-          return;
-        }
-        demo = true;
+        alert((session && session.error) || I18N.t('don.err.network'));
+        resetSubmit();
+        return;
       } catch (err) {
         console.warn('Checkout failed:', err);
-        demo = true;
+        alert(I18N.t('don.err.network'));
+        resetSubmit();
+        return;
       }
-    } else {
-      try {
-        if (typeof submitDonation === 'function') {
-          result = await submitDonation(donationData);
-          demo = !!(result && result.demo);
-        } else {
-          demo = true;
-        }
-      } catch (err) {
-        console.warn('Donation submit failed:', err);
-        demo = true;
+    }
+
+    let result = null;
+    try {
+      if (typeof submitDonation === 'function') {
+        result = await submitDonation(donationData);
       }
+    } catch (err) {
+      console.warn('Donation submit failed:', err);
+      result = { success: false, error: I18N.t('don.err.submit') };
+    }
+
+    if (!result || result.success === false) {
+      alert((result && result.error) || I18N.t('don.err.submit'));
+      resetSubmit();
+      return;
     }
 
     document.getElementById('modal-amount').textContent = '$' + amount.toLocaleString();
     document.getElementById('modal-cause').textContent = causeLabel;
     const refLine = result && result.ref ? result.ref : ref;
-    document.getElementById('modal-ref').textContent = 'Référence : ' + refLine + (demo ? '' : ' — En attente de confirmation du paiement.');
+    document.getElementById('modal-ref').textContent = I18N.t('don.ref', { ref: refLine }) + I18N.t('don.confirmSuffix');
 
-    const demoLabel = document.querySelector('.modal-demo-label');
-    if (demo) {
-      if (!demoLabel) {
-        const banner = document.querySelector('.modal-cause');
-        const label = document.createElement('div');
-        label.className = 'modal-demo-label';
-        label.style.cssText = 'font-family: var(--font-mono); font-size: var(--text-xs); color: var(--warning, #f39c12); margin-top: 8px;';
-        label.textContent = 'Mode démo — Don enregistré localement, aucun paiement traité.';
-        if (banner) banner.parentNode.insertBefore(label, banner.nextSibling);
-      }
-    } else if (demoLabel) {
-      demoLabel.remove();
-    }
-
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Confirmer le don';
-    }
-
+    document.querySelector('.modal-notice')?.remove();
+    resetSubmit();
     this.openModal();
   },
 

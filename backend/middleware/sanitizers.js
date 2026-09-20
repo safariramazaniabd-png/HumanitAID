@@ -1,5 +1,5 @@
 const ALLOWED_COLUMNS = {
-  posts: ['title', 'slug', 'summary', 'content', 'featured_image', 'video_url', 'category', 'location', 'status', 'is_featured', 'published_at', 'scheduled_at', 'seo_title', 'seo_description', 'og_image'],
+  posts: ['title', 'slug', 'summary', 'content', 'featured_image', 'video_url', 'category', 'cause_id', 'location', 'status', 'is_featured', 'published_at', 'scheduled_at', 'seo_title', 'seo_description', 'og_image'],
   news: ['title', 'slug', 'summary', 'content', 'featured_image', 'video_url', 'category', 'status', 'is_featured', 'published_at', 'seo_title', 'seo_description', 'og_image'],
   testimonials: ['author_name', 'category', 'location', 'content', 'photo_url', 'video_url', 'status', 'display_order'],
   slides: ['type', 'title', 'subtitle', 'description', 'image_url', 'video_url', 'cta_text', 'cta_url', 'is_active', 'is_main', 'duration', 'display_order'],

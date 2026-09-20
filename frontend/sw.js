@@ -1,4 +1,4 @@
-const CACHE_NAME = 'humanitaid-v2';
+const CACHE_NAME = 'humanitaid-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,11 +11,15 @@ const STATIC_ASSETS = [
   '/js/app.js',
   '/js/api.js',
   '/js/theme.js',
+  '/js/i18n.js',
+  '/js/icons.js',
   '/js/carousel.js',
   '/js/donation.js',
   '/manifest.webmanifest',
+  '/assets/icons/favicon.svg',
   '/assets/icons/icon-192.png',
-  '/assets/icons/icon-512.png'
+  '/assets/icons/icon-512.png',
+  '/assets/logo/humanitaid-symbol.svg'
 ];
 
 self.addEventListener('install', (event) => {

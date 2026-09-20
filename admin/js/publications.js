@@ -1,51 +1,75 @@
 /* =========================================
    HumanitAID Admin — Publications
+   Branché sur l'API réelle (backend/routes/posts.js).
+   Chaque publication est rattachée à une cause réelle (backend/routes/causes.js).
    ========================================= */
 
 (function () {
-  const DEMO_PUBS = [
-    { id: 1, title: 'Crise humanitaire en RDC : état des lieux', slug: 'crise-humanitaire-rdc-etat-lieux', summary: 'Panorama de la situation humanitaire dans les provinces orientales de la RDC.', content: 'La République Démocratique du Congo fait face à une crise humanitaire majeure depuis plusieurs années. Les provinces du Nord-Kivu, Sud-Kivu et Ituri sont les plus touchées par les conflits armés et les déplacements forcés de populations.', image: '', category: 'Urgence', status: 'published', featured: true, date: '2026-09-01', seo_title: 'Crise RDC HumanitAID', seo_desc: 'État de la crise humanitaire en RDC' },
-    { id: 2, title: 'Campagne d\'eau potable : résultats du trimestre', slug: 'campagne-eau-potable-resultats', summary: 'Les résultats de notre programme d\'accès à l\'eau potable dans le Sud-Kivu.', content: 'Au cours du dernier trimestre, notre programme a permis de fournir de l\'eau potable à plus de 35 000 personnes dans les zones rurales du Sud-Kivu.', image: '', category: 'Rapport', status: 'published', featured: false, date: '2026-08-28', seo_title: 'Eau potable RDC', seo_desc: 'Résultats programme eau' },
-    { id: 3, title: 'Écoles temporaires : un espoir pour 2 400 enfants', slug: 'ecoles-temporaires-espoir-enfants', summary: 'Mise en place d\'écoles temporaires pour les enfants déplacés.', content: 'HumanitAID a ouvert 12 écoles temporaires dans les camps de déplacés, offrant un enseignement à 2 400 enfants qui n\'avaient plus accès à l\'éducation.', image: '', category: 'Terrain', status: 'published', featured: true, date: '2026-08-20', seo_title: 'Écoles temporaires RDC', seo_desc: 'Éducation enfants déplacés' },
-    { id: 4, title: 'Appel aux dons : urgence alimentaire', slug: 'appel-dons-urgence-alimentaire', summary: 'L\'insécurité alimentaire touche 27 millions de personnes en RDC.', content: 'Face à l\'aggravation de la crise alimentaire, HumanitAID lance un appel urgent pour fournir des rations alimentaires aux familles les plus vulnérables.', image: '', category: 'Urgence', status: 'draft', featured: false, date: '2026-09-03', seo_title: 'Urgence alimentaire RDC', seo_desc: 'Appel aux dons alimentation' },
-    { id: 5, title: 'Partenariat avec l\'ONU : nuevo acuerdo', slug: 'partenariat-onu-nuevo-acuerdo', summary: 'Signature d\'un accord de coopération avec le PAM.', content: 'HumanitAID a signé un accord de coopération avec le Programme Alimentaire Mondial pour renforcer la distribution alimentaire dans les zones difficiles d\'accès.', image: '', category: 'Partenariat', status: 'scheduled', featured: false, date: '2026-09-10', seo_title: 'Partenariat PAM', seo_desc: 'Coopération HumanitAID PAM' },
-    { id: 6, title: 'Témoignage d\'une infirmière de terrain', slug: 'temoinage-infirmiere-terrain', summary: 'Sandra raconte son expérience dans un centre de santé du Nord-Kivu.', content: '« Chaque jour, nous recevons des dizaines de patients. Les blessures par armes à feu sont malheureusement très fréquentes. Mais nous ne lâchons rien. »', image: '', category: 'Témoignage', status: 'archived', featured: false, date: '2026-07-15', seo_title: 'Témoignage infirmière', seo_desc: 'Récit terrain RDC' }
-  ];
-
-  let pubs = [...DEMO_PUBS];
+  let pubs = [];
+  let causesList = [];
   let currentFilter = 'all';
   let searchQuery = '';
   let editingPub = null;
+  let loadError = null;
 
-  function filtered() {
-    let list = pubs;
-    if (currentFilter !== 'all') list = list.filter(p => p.status === currentFilter);
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(p => p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+  async function loadCauses() {
+    const data = await App.api('/causes');
+    causesList = (data && data.causes) || [];
+  }
+
+  async function loadPubs(container) {
+    container.innerHTML = '<div class="section-header"><h2>Publications</h2></div><p class="text-muted">Chargement…</p>';
+    const qs = new URLSearchParams();
+    if (currentFilter !== 'all') qs.set('status', currentFilter);
+    if (searchQuery) qs.set('search', searchQuery);
+    qs.set('limit', '100');
+
+    const data = await App.api(`/posts?${qs.toString()}`);
+    if (!data || !data.posts) {
+      loadError = true;
+      pubs = [];
+    } else {
+      loadError = false;
+      pubs = data.posts;
     }
-    return list;
+    renderList(container);
+  }
+
+  function causeLabel(cause_id) {
+    const cause = causesList.find(c => c.id === cause_id);
+    return cause ? cause.title : '— Aucune cause —';
   }
 
   function renderList(container) {
-    const statusCounts = { all: pubs.length, published: pubs.filter(p => p.status === 'published').length, draft: pubs.filter(p => p.status === 'draft').length, scheduled: pubs.filter(p => p.status === 'scheduled').length, archived: pubs.filter(p => p.status === 'archived').length };
+    if (loadError) {
+      container.innerHTML = `
+        <div class="section-header"><h2>Publications</h2></div>
+        <p class="text-muted">Impossible de charger les publications depuis le serveur. Vérifiez la connexion à l'API.</p>
+        <button class="btn btn-secondary" id="retry-pubs">Réessayer</button>
+      `;
+      document.getElementById('retry-pubs').addEventListener('click', () => loadPubs(container));
+      return;
+    }
+
+    const isTrash = currentFilter === 'trashed';
 
     container.innerHTML = `
       <div class="section-header">
-        <h2>Publications <span class="demo-badge">DEMO</span></h2>
-        <button class="btn btn-primary" id="new-pub-btn">+ Nouvelle publication</button>
+        <h2>Publications</h2>
+        ${!isTrash ? '<button class="btn btn-primary" id="new-pub-btn">+ Nouvelle publication</button>' : ''}
       </div>
       <div class="tabs">
-        <button class="tab ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">Toutes (${statusCounts.all})</button>
-        <button class="tab ${currentFilter === 'published' ? 'active' : ''}" data-filter="published">Publiées (${statusCounts.published})</button>
-        <button class="tab ${currentFilter === 'draft' ? 'active' : ''}" data-filter="draft">Brouillons (${statusCounts.draft})</button>
-        <button class="tab ${currentFilter === 'scheduled' ? 'active' : ''}" data-filter="scheduled">Planifiées (${statusCounts.scheduled})</button>
-        <button class="tab ${currentFilter === 'archived' ? 'active' : ''}" data-filter="archived">Archivées (${statusCounts.archived})</button>
+        <button class="tab ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">Toutes</button>
+        <button class="tab ${currentFilter === 'published' ? 'active' : ''}" data-filter="published">Publiées</button>
+        <button class="tab ${currentFilter === 'draft' ? 'active' : ''}" data-filter="draft">Brouillons</button>
+        <button class="tab ${currentFilter === 'scheduled' ? 'active' : ''}" data-filter="scheduled">Planifiées</button>
+        <button class="tab ${currentFilter === 'archived' ? 'active' : ''}" data-filter="archived">Archivées</button>
+        <button class="tab ${currentFilter === 'trashed' ? 'active' : ''}" data-filter="trashed">Corbeille</button>
       </div>
       <div class="toolbar">
         <div class="toolbar-search">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="Rechercher..." id="pub-search" value="${searchQuery}">
+          <input type="text" placeholder="Rechercher..." id="pub-search" value="${escHtml(searchQuery)}">
         </div>
       </div>
       <div class="table-wrapper">
@@ -53,6 +77,7 @@
           <thead>
             <tr>
               <th>Titre</th>
+              <th>Cause</th>
               <th>Catégorie</th>
               <th>Statut</th>
               <th>Date</th>
@@ -60,57 +85,71 @@
             </tr>
           </thead>
           <tbody>
-            ${filtered().map(p => `
+            ${pubs.map(p => {
+              const isTrash = currentFilter === 'trashed';
+              return `
               <tr>
-                <td><strong>${p.title}</strong>${p.featured ? ' ⭐' : ''}</td>
-                <td><span class="badge badge-info">${p.category}</span></td>
+                <td><strong>${escHtml(p.title)}</strong>${p.is_featured ? ' ⭐' : ''}</td>
+                <td>${p.cause_title ? causeLabel(p.cause_id) : '<span class="text-muted">—</span>'}</td>
+                <td>${p.category ? `<span class="badge badge-info">${escHtml(p.category)}</span>` : ''}</td>
                 <td>${App.statusBadge(p.status)}</td>
-                <td>${App.formatDate(p.date)}</td>
+                <td>${App.formatDate(p.published_at || p.created_at)}</td>
                 <td class="table-actions">
-                  <button class="btn btn-secondary btn-sm edit-pub" data-id="${p.id}">Modifier</button>
-                  <button class="btn btn-ghost btn-sm delete-pub" data-id="${p.id}">Supprimer</button>
+                  ${isTrash
+                    ? `<button class="btn btn-secondary btn-sm restore-pub" data-id="${p.id}">Restaurer</button>`
+                    : `<button class="btn btn-secondary btn-sm edit-pub" data-id="${p.id}">Modifier</button>
+                       <button class="btn btn-ghost btn-sm delete-pub" data-id="${p.id}">Supprimer</button>`}
                 </td>
-              </tr>
-            `).join('')}
-            ${filtered().length === 0 ? '<tr><td colspan="5" class="text-muted" style="text-align:center;padding:40px;">Aucune publication trouvée</td></tr>' : ''}
+              </tr>`
+            }).join('')}
+            ${pubs.length === 0 ? `<tr><td colspan="6" class="text-muted" style="text-align:center;padding:40px;">${isTrash ? 'Corbeille vide' : 'Aucune publication trouvée'}</td></tr>` : ''}
           </tbody>
         </table>
       </div>
     `;
 
     container.querySelectorAll('.tab').forEach(t => {
-      t.addEventListener('click', () => { currentFilter = t.dataset.filter; renderList(container); });
+      t.addEventListener('click', () => { currentFilter = t.dataset.filter; loadPubs(container); });
     });
 
-    document.getElementById('pub-search').addEventListener('input', (e) => {
+    const searchInput = document.getElementById('pub-search');
+    let searchTimer;
+    searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
-      renderList(container);
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => loadPubs(container), 300);
     });
 
-    document.getElementById('new-pub-btn').addEventListener('click', () => {
-      editingPub = null;
-      renderForm(container);
-    });
+    const newBtn = document.getElementById('new-pub-btn');
+    if (newBtn) newBtn.addEventListener('click', () => { editingPub = null; renderForm(container); });
 
     container.querySelectorAll('.edit-pub').forEach(btn => {
       btn.addEventListener('click', () => {
-        editingPub = pubs.find(p => p.id === parseInt(btn.dataset.id));
+        editingPub = pubs.find(p => p.id === btn.dataset.id);
         renderForm(container);
       });
     });
 
     container.querySelectorAll('.delete-pub').forEach(btn => {
       btn.addEventListener('click', () => {
-        App.confirmModal('Supprimer', 'Supprimer cette publication ?', () => {
-          pubs = pubs.filter(p => p.id !== parseInt(btn.dataset.id));
-          renderList(container);
+        App.confirmModal('Supprimer', 'Déplacer cette publication vers la corbeille ?', async () => {
+          await App.api(`/posts/${btn.dataset.id}`, { method: 'DELETE' });
+          loadPubs(container);
         });
+      });
+    });
+
+    container.querySelectorAll('.restore-pub').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await App.api(`/posts/${btn.dataset.id}/restore`, { method: 'POST' });
+        loadPubs(container);
       });
     });
   }
 
   function renderForm(container) {
-    const p = editingPub || { title: '', slug: '', summary: '', content: '', image: '', category: 'Urgence', status: 'draft', featured: false, date: new Date().toISOString().split('T')[0], seo_title: '', seo_desc: '' };
+    const p = editingPub || { title: '', slug: '', summary: '', content: '', featured_image: '', video_url: '', category: 'Urgence', cause_id: '', status: 'draft', is_featured: false, published_at: '', seo_title: '', seo_description: '' };
+    const pubDate = p.published_at ? new Date(p.published_at).toISOString().split('T')[0] : '';
 
     container.innerHTML = `
       <div class="section-header">
@@ -121,46 +160,54 @@
         <div class="form-section-title">Contenu</div>
         <div class="form-group">
           <label>Titre</label>
-          <input type="text" id="pub-title" value="${p.title}">
+          <input type="text" id="pub-title" value="${escHtml(p.title)}">
         </div>
         <div class="form-group">
           <label>Slug</label>
-          <input type="text" id="pub-slug" value="${p.slug}">
+          <input type="text" id="pub-slug" value="${escHtml(p.slug || '')}">
         </div>
         <div class="form-group">
           <label>Résumé</label>
-          <textarea id="pub-summary" rows="3">${p.summary}</textarea>
+          <textarea id="pub-summary" rows="3">${escHtml(p.summary || '')}</textarea>
         </div>
         <div class="form-group">
           <label>Contenu</label>
-          <textarea id="pub-content" rows="10" style="max-height:400px;">${p.content}</textarea>
+          <textarea id="pub-content" rows="10" style="max-height:400px;">${escHtml(p.content || '')}</textarea>
         </div>
       </div>
       <div class="form-section">
         <div class="form-section-title">Média</div>
-        <div class="form-group">
-          <label>Image à la une (URL)</label>
-          <input type="url" id="pub-image" value="${p.image}" placeholder="https://...">
-        </div>
-        <div class="form-group">
-          <label>Vidéo (URL)</label>
-          <input type="url" id="pub-video" placeholder="https://youtube.com/...">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Image à la une (URL)</label>
+            <input type="url" id="pub-image" value="${escHtml(p.featured_image || '')}" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Vidéo (URL)</label>
+            <input type="url" id="pub-video" value="${escHtml(p.video_url || '')}" placeholder="https://youtube.com/...">
+          </div>
         </div>
       </div>
       <div class="form-section">
         <div class="form-section-title">Paramètres</div>
         <div class="form-row">
           <div class="form-group">
-            <label>Catégorie</label>
-            <select id="pub-category">
-              <option ${p.category === 'Urgence' ? 'selected' : ''}>Urgence</option>
-              <option ${p.category === 'Terrain' ? 'selected' : ''}>Terrain</option>
-              <option ${p.category === 'Témoignage' ? 'selected' : ''}>Témoignage</option>
-              <option ${p.category === 'Rapport' ? 'selected' : ''}>Rapport</option>
-              <option ${p.category === 'Partenariat' ? 'selected' : ''}>Partenariat</option>
-              <option ${p.category === 'Plaidoyer' ? 'selected' : ''}>Plaidoyer</option>
+            <label>Cause associée</label>
+            <select id="pub-cause">
+              <option value="">— Aucune cause —</option>
+              ${causesList.map(c => `<option value="${c.id}" ${p.cause_id === c.id ? 'selected' : ''}>${escHtml(c.title)}</option>`).join('')}
             </select>
           </div>
+          <div class="form-group">
+            <label>Catégorie</label>
+            <select id="pub-category">
+              ${['Urgence', 'Terrain', 'Témoignage', 'Rapport', 'Partenariat', 'Plaidoyer'].map(cat =>
+                `<option ${p.category === cat ? 'selected' : ''}>${cat}</option>`
+              ).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
             <label>Statut</label>
             <select id="pub-status">
@@ -170,15 +217,9 @@
               <option value="archived" ${p.status === 'archived' ? 'selected' : ''}>Archivé</option>
             </select>
           </div>
-        </div>
-        <div class="form-row">
           <div class="form-group">
             <label>Date de publication</label>
-            <input type="date" id="pub-date" value="${p.date}">
-          </div>
-          <div class="form-check" style="margin-top:24px;">
-            <input type="checkbox" id="pub-featured" ${p.featured ? 'checked' : ''}>
-            <label for="pub-featured">Article à la une</label>
+            <input type="date" id="pub-date" value="${pubDate}">
           </div>
         </div>
       </div>
@@ -186,59 +227,75 @@
         <div class="form-section-title">SEO</div>
         <div class="form-group">
           <label>Titre SEO</label>
-          <input type="text" id="pub-seo-title" value="${p.seo_title}">
+          <input type="text" id="pub-seo-title" value="${escHtml(p.seo_title || '')}">
         </div>
         <div class="form-group">
           <label>Description SEO</label>
-          <textarea id="pub-seo-desc" rows="2">${p.seo_desc}</textarea>
+          <textarea id="pub-seo-desc" rows="2">${escHtml(p.seo_description || '')}</textarea>
         </div>
       </div>
+      <p class="text-sm text-muted" id="pub-save-error" hidden></p>
       <div class="btn-group" style="justify-content:flex-end;">
         <button class="btn btn-secondary" id="save-draft-btn">Enregistrer brouillon</button>
         <button class="btn btn-primary" id="publish-btn">${editingPub ? 'Mettre à jour' : 'Publier'}</button>
       </div>
     `;
 
-    document.getElementById('pub-title').addEventListener('input', (e) => {
-      if (!editingPub) {
-        document.getElementById('pub-slug').value = e.target.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      }
-    });
-
-    document.getElementById('back-to-list').addEventListener('click', () => renderList(container));
+    document.getElementById('back-to-list').addEventListener('click', () => loadPubs(container));
     document.getElementById('save-draft-btn').addEventListener('click', () => savePub(container, 'draft'));
     document.getElementById('publish-btn').addEventListener('click', () => savePub(container, document.getElementById('pub-status').value));
   }
 
   function savePub(container, status) {
+    const dateVal = document.getElementById('pub-date').value;
     const data = {
       title: document.getElementById('pub-title').value,
       slug: document.getElementById('pub-slug').value,
       summary: document.getElementById('pub-summary').value,
       content: document.getElementById('pub-content').value,
-      image: document.getElementById('pub-image').value,
+      featured_image: document.getElementById('pub-image').value,
+      video_url: document.getElementById('pub-video').value,
+      cause_id: document.getElementById('pub-cause').value || null,
       category: document.getElementById('pub-category').value,
       status: status,
-      featured: document.getElementById('pub-featured').checked,
-      date: document.getElementById('pub-date').value,
+      is_featured: document.getElementById('pub-featured') ? document.getElementById('pub-featured').checked : false,
+      published_at: status === 'published' ? (dateVal ? new Date(dateVal).toISOString() : new Date().toISOString()) : (dateVal ? new Date(dateVal).toISOString() : null),
       seo_title: document.getElementById('pub-seo-title').value,
-      seo_desc: document.getElementById('pub-seo-desc').value
+      seo_description: document.getElementById('pub-seo-desc').value,
     };
 
-    if (editingPub) {
-      Object.assign(editingPub, data);
-    } else {
-      data.id = Math.max(0, ...pubs.map(p => p.id)) + 1;
-      pubs.push(data);
+    if (!data.title || data.title.trim().length < 3) {
+      const err = document.getElementById('pub-save-error');
+      err.hidden = false;
+      err.textContent = 'Le titre doit contenir au moins 3 caractères.';
+      return;
     }
+
+    const btn = editingPub ? document.getElementById('publish-btn') : document.getElementById('publish-btn');
+    btn.disabled = true;
+
+    const res = editingPub
+      ? await App.api(`/posts/${editingPub.id}`, { method: 'PUT', body: JSON.stringify({ ...data, id: editingPub.id }) })
+      : await App.api('/posts', { method: 'POST', body: JSON.stringify(data) });
+
+    btn.disabled = false;
+
+    if (!res || res.error) {
+      const err = document.getElementById('pub-save-error');
+      err.hidden = false;
+      err.textContent = (res && (res.error ? `${res.error}${res.details ? ' : ' + res.details.join(', ') : ''}` : null)) || 'Erreur de connexion au serveur.';
+      return;
+    }
+
     editingPub = null;
-    renderList(container);
+    loadPubs(container);
   }
 
-  App.registerPage('publications', function (container) {
+  App.registerPage('publications', async function (container) {
     editingPub = null;
     currentFilter = 'all';
     searchQuery = '';
-    renderList(container);
+    await loadCauses();
+    loadPubs(container);
   });
 })();

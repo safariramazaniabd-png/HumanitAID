@@ -1,0 +1,1601 @@
+From 4dee78ba55b7f28da10fbe6e1037987b55ff1310 Mon Sep 17 00:00:00 2001
+From: "Abdallah (via Claude, audit HumanitAID)" <abdallah@humanit-aid.org>
+Date: Sat, 19 Sep 2026 11:05:51 +0000
+Subject: [PATCH] =?UTF-8?q?fix:=20PWA=20install=20(service=20worker=20HTTP?=
+ =?UTF-8?q?S),=20hamburger=20=C3=A0=20gauche,=20CMS=20causes/publications?=
+ =?UTF-8?q?=20r=C3=A9el,=20suppression=20du=20mode=20d=C3=A9mo=20public?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- frontend/js/app.js : corrige la condition inversée qui empêchait
+  l'enregistrement du service worker en HTTPS (production) — cause
+  du prompt d'installation PWA disparu
+- frontend/index.html : bouton hamburger déplacé en tête de nav
+  (réellement à gauche, DOM + tabulation clavier) ; lien Accueil
+  ajouté au drawer mobile ; bandeau d'indisponibilité reformulé
+  honnêtement (ne prétend plus afficher des "exemples")
+- database/migrations/002_posts_cause_relation_and_trash.sql :
+  ajoute posts.cause_id (relation vers causes) et posts.deleted_at
+  (corbeille récupérable)
+- backend/middleware/sanitizers.js : cause_id ajouté à la liste
+  blanche des colonnes modifiables pour posts
+- backend/routes/posts.js : relation cause_id, corbeille avec
+  restauration (POST /:id/restore) et suppression définitive
+  séparée (super_admin), corrige une recherche cassée (excerpt
+  n'existe pas en base, c'est summary)
+- admin/js/causes.js, admin/js/publications.js : réécrits pour
+  appeler l'API réelle au lieu de données locales fictives ;
+  sélecteur de cause réelle dans le formulaire de publication,
+  onglet Corbeille avec restauration
+- admin/js/app.js, admin/index.html : retrait du flag DEMO_MODE
+  trompeur et de la bannière "DEMO" affichée en permanence
+- frontend/js/api.js : suppression du contenu fictif de repli
+  (DEMO_DATA) ; les fonctions fetch* renvoient un état honnête
+  (vide/null) si l'API est injoignable au lieu d'inventer du
+  contenu
+- frontend/js/donation.js : corrige un bug sérieux — un échec réel
+  de paiement (réseau/serveur indisponible) pouvait afficher une
+  modale de confirmation de don avec juste un petit texte
+  "mode démo" ; un échec affiche maintenant clairement une erreur
+  et n'ouvre plus jamais la modale de confirmation
+
+Testé localement en DEMO_MODE=true (sans toucher à la prod) :
+lint OK, corbeille/restauration OK, relation cause_id OK, échec de
+don correctement signalé comme échec.
+---
+ admin/index.html                              |   1 -
+ admin/js/app.js                               |   2 +-
+ admin/js/causes.js                            | 119 ++++--
+ admin/js/publications.js                      | 223 +++++++----
+ backend/middleware/sanitizers.js              |   2 +-
+ backend/routes/posts.js                       | 186 +++++----
+ .../002_posts_cause_relation_and_trash.sql    |  22 +
+ frontend/index.html                           |  15 +-
+ frontend/js/api.js                            | 377 ++----------------
+ frontend/js/app.js                            |  20 +-
+ frontend/js/donation.js                       |  61 ++-
+ 11 files changed, 434 insertions(+), 594 deletions(-)
+ create mode 100644 database/migrations/002_posts_cause_relation_and_trash.sql
+
+diff --git a/admin/index.html b/admin/index.html
+index 1bb9ac6..ab8991b 100644
+--- a/admin/index.html
++++ b/admin/index.html
+@@ -103,7 +103,6 @@
+         <div class="topbar-breadcrumb" id="page-title">Tableau de bord</div>
+       </div>
+       <div class="topbar-right">
+-        <div class="demo-banner">DEMO — Mode démonstration</div>
+         <div class="topbar-search">
+           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+           <input type="text" placeholder="Rechercher..." id="global-search">
+diff --git a/admin/js/app.js b/admin/js/app.js
+index 1b0271d..fa88b36 100644
+--- a/admin/js/app.js
++++ b/admin/js/app.js
+@@ -13,7 +13,7 @@ const App = {
+   API_BASE: window.location.port
+     ? `${window.location.protocol}//${window.location.hostname}:3000/api`
+     : `${window.location.origin}/api`,
+-  DEMO_MODE: true,
++  DEMO_MODE: false,
+   TOKEN_KEY: 'humanitaid_admin_token',
+   THEME_KEY: 'humanitaid_admin_theme',
+ 
+diff --git a/admin/js/causes.js b/admin/js/causes.js
+index ee5f5cc..5fbb14a 100644
+--- a/admin/js/causes.js
++++ b/admin/js/causes.js
+@@ -1,22 +1,42 @@
+ /* =========================================
+    HumanitAID Admin — Causes
++   Branché sur l'API réelle (backend/routes/causes.js).
+    ========================================= */
+ 
+ (function () {
+-  let causes = [
+-    { id: 1, title: 'Eau potable pour tous', slug: 'eau-potable', description: 'Construire des points d\'eau et des systemes de filtration dans les communautés rurales du Sud-Kivu.', image: '', goal: 200000, collected: 142500, status: 'active', order: 1 },
+-    { id: 2, title: 'Santé d\'urgence', slug: 'sante-urgence', description: 'Financer des centres de santé mobiles et des équipes médicales d\'urgence dans les zones de conflit.', image: '', goal: 350000, collected: 198000, status: 'active', order: 2 },
+-    { id: 3, title: 'Éducation des enfants', slug: 'education-enfants', description: 'Créer des écoles temporaires et fournir du matériel scolaire aux enfants déplacés.', image: '', goal: 150000, collected: 87600, status: 'active', order: 3 },
+-    { id: 4, title: 'Sécurité alimentaire', slug: 'securite-alimentaire', description: 'Distribuer des rations alimentaires et soutenir l\'agriculture locale pour lutter contre la famine.', image: '', goal: 500000, collected: 325000, status: 'active', order: 4 },
+-    { id: 5, title: 'Abri et shelter', slug: 'abri-shelter', description: 'Construire des abris temporaires pour les familles déplacées par les conflits armés.', image: '', goal: 280000, collected: 165400, status: 'active', order: 5 }
+-  ];
+-
++  let causes = [];
+   let editing = null;
++  let loadError = null;
++
++  async function load(container) {
++    container.innerHTML = '<div class="section-header"><h2>Causes</h2></div><p class="text-muted">Chargement…</p>';
++    const data = await App.api('/causes');
++    if (!data || !data.causes) {
++      loadError = true;
++      causes = [];
++    } else {
++      loadError = false;
++      causes = data.causes;
++    }
++    render(container);
++  }
+ 
+   function render(container) {
++    if (loadError) {
++      container.innerHTML = `
++        <div class="section-header"><h2>Causes</h2></div>
++        <p class="text-muted">Impossible de charger les causes depuis le serveur. Vérifiez la connexion à l'API.</p>
++        <button class="btn btn-secondary" id="retry-causes">Réessayer</button>
++      `;
++      document.getElementById('retry-causes').addEventListener('click', () => load(container));
++      return;
++    }
++
++    const sorted = [...causes].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
++
+     container.innerHTML = `
+       <div class="section-header">
+-        <h2>Causes <span class="demo-badge">DEMO</span></h2>
++        <h2>Causes</h2>
+       </div>
+       <div class="table-wrapper">
+         <table class="data-table">
+@@ -25,22 +45,24 @@
+               <th>#</th>
+               <th>Titre</th>
+               <th>Objectif</th>
+-              <th>Collecté (DEMO)</th>
++              <th>Collecté</th>
+               <th>Progression</th>
+               <th>Statut</th>
+               <th>Actions</th>
+             </tr>
+           </thead>
+           <tbody>
+-            ${causes.sort((a, b) => a.order - b.order).map(c => {
+-              const pct = Math.round((c.collected / c.goal) * 100);
++            ${sorted.map(c => {
++              const goal = Number(c.goal) || 0;
++              const collected = Number(c.collected) || 0;
++              const pct = goal > 0 ? Math.round((collected / goal) * 100) : 0;
+               const color = pct >= 75 ? 'green' : pct >= 40 ? 'gold' : 'red';
+               return `
+               <tr>
+-                <td>${c.order}</td>
+-                <td><strong>${c.title}</strong></td>
+-                <td>${App.formatMoney(c.goal)}</td>
+-                <td>${App.formatMoney(c.collected)} <span class="demo-badge">DEMO</span></td>
++                <td>${c.display_order}</td>
++                <td><strong>${escHtml(c.title)}</strong></td>
++                <td>${App.formatMoney(goal)}</td>
++                <td>${App.formatMoney(collected)}</td>
+                 <td style="min-width:150px;">
+                   <div class="flex-center" style="margin-bottom:4px;">
+                     <span class="text-sm text-muted">${pct}%</span>
+@@ -60,7 +82,7 @@
+ 
+     container.querySelectorAll('.edit-cause').forEach(btn => {
+       btn.addEventListener('click', () => {
+-        editing = causes.find(c => c.id === parseInt(btn.dataset.id));
++        editing = causes.find(c => c.id === btn.dataset.id);
+         renderForm(container);
+       });
+     });
+@@ -68,25 +90,27 @@
+ 
+   function renderForm(container) {
+     const c = editing;
+-    const pct = Math.round((c.collected / c.goal) * 100);
++    const goal = Number(c.goal) || 0;
++    const collected = Number(c.collected) || 0;
++    const pct = goal > 0 ? Math.round((collected / goal) * 100) : 0;
+ 
+     container.innerHTML = `
+       <div class="section-header">
+-        <h2>Modifier : ${c.title}</h2>
++        <h2>Modifier : ${escHtml(c.title)}</h2>
+         <button class="btn btn-secondary" id="back-causes">← Retour</button>
+       </div>
+       <div class="form-section">
+         <div class="form-section-title">Détails de la cause</div>
+-        <div class="form-group"><label>Titre</label><input type="text" id="cause-title" value="${c.title}"></div>
+-        <div class="form-group"><label>Slug</label><input type="text" id="cause-slug" value="${c.slug}"></div>
+-        <div class="form-group"><label>Description</label><textarea id="cause-desc" rows="4">${c.description}</textarea></div>
+-        <div class="form-group"><label>Image (URL)</label><input type="url" id="cause-image" value="${c.image}" placeholder="https://..."></div>
++        <div class="form-group"><label>Titre</label><input type="text" id="cause-title" value="${escHtml(c.title)}"></div>
++        <div class="form-group"><label>Slug</label><input type="text" id="cause-slug" value="${escHtml(c.slug)}" disabled title="Le slug est fixe, il est utilisé par les liens existants."></div>
++        <div class="form-group"><label>Description</label><textarea id="cause-desc" rows="4">${escHtml(c.description || '')}</textarea></div>
++        <div class="form-group"><label>Image (URL)</label><input type="url" id="cause-image" value="${escHtml(c.image_url || '')}" placeholder="https://..."></div>
+       </div>
+       <div class="form-section">
+-        <div class="form-section-title">Finances <span class="demo-badge">DEMO</span></div>
++        <div class="form-section-title">Finances</div>
+         <div class="form-row">
+-          <div class="form-group"><label>Objectif ($)</label><input type="number" id="cause-goal" value="${c.goal}"></div>
+-          <div class="form-group"><label>Montant collecté ($) — DEMO</label><input type="number" id="cause-collected" value="${c.collected}"></div>
++          <div class="form-group"><label>Objectif ($)</label><input type="number" id="cause-goal" value="${goal}"></div>
++          <div class="form-group"><label>Montant collecté ($)</label><input type="number" id="cause-collected" value="${collected}" title="À ajuster manuellement seulement si les dons réels ne sont pas encore tous enregistrés automatiquement."></div>
+         </div>
+         <div class="flex-center" style="margin-top:12px;">
+           <span class="text-sm text-muted">Progression actuelle : ${pct}%</span>
+@@ -102,30 +126,49 @@
+               <option value="active" ${c.status === 'active' ? 'selected' : ''}>Actif</option>
+               <option value="paused" ${c.status === 'paused' ? 'selected' : ''}>En pause</option>
+               <option value="completed" ${c.status === 'completed' ? 'selected' : ''}>Terminé</option>
++              <option value="archived" ${c.status === 'archived' ? 'selected' : ''}>Archivé</option>
+             </select>
+           </div>
+-          <div class="form-group"><label>Ordre d'affichage</label><input type="number" id="cause-order" value="${c.order}"></div>
++          <div class="form-group"><label>Ordre d'affichage</label><input type="number" id="cause-order" value="${c.display_order}"></div>
+         </div>
+       </div>
++      <p class="text-sm text-muted" id="cause-save-error" hidden></p>
+       <div class="btn-group" style="justify-content:flex-end;">
+         <button class="btn btn-primary" id="save-cause-btn">Mettre à jour</button>
+       </div>
+     `;
+ 
+     document.getElementById('back-causes').addEventListener('click', () => render(container));
+-    document.getElementById('save-cause-btn').addEventListener('click', () => {
+-      c.title = document.getElementById('cause-title').value;
+-      c.slug = document.getElementById('cause-slug').value;
+-      c.description = document.getElementById('cause-desc').value;
+-      c.image = document.getElementById('cause-image').value;
+-      c.goal = parseInt(document.getElementById('cause-goal').value);
+-      c.collected = parseInt(document.getElementById('cause-collected').value);
+-      c.status = document.getElementById('cause-status').value;
+-      c.order = parseInt(document.getElementById('cause-order').value);
++    document.getElementById('save-cause-btn').addEventListener('click', async () => {
++      const btn = document.getElementById('save-cause-btn');
++      const errEl = document.getElementById('cause-save-error');
++      btn.disabled = true;
++      btn.textContent = 'Enregistrement…';
++
++      const payload = {
++        title: document.getElementById('cause-title').value,
++        description: document.getElementById('cause-desc').value,
++        image_url: document.getElementById('cause-image').value,
++        goal: parseFloat(document.getElementById('cause-goal').value) || 0,
++        collected: parseFloat(document.getElementById('cause-collected').value) || 0,
++        status: document.getElementById('cause-status').value,
++        display_order: parseInt(document.getElementById('cause-order').value, 10) || 0,
++      };
++
++      const res = await App.api(`/causes/${c.id}`, { method: 'PUT', body: JSON.stringify(payload) });
++      btn.disabled = false;
++      btn.textContent = 'Mettre à jour';
++
++      if (!res || res.error) {
++        errEl.hidden = false;
++        errEl.textContent = (res && res.error) || 'Erreur de connexion au serveur.';
++        return;
++      }
++
+       editing = null;
+-      render(container);
++      await load(container);
+     });
+   }
+ 
+-  App.registerPage('causes', function (container) { editing = null; render(container); });
++  App.registerPage('causes', function (container) { editing = null; load(container); });
+ })();
+diff --git a/admin/js/publications.js b/admin/js/publications.js
+index 0793132..f952421 100644
+--- a/admin/js/publications.js
++++ b/admin/js/publications.js
+@@ -1,51 +1,75 @@
+ /* =========================================
+    HumanitAID Admin — Publications
++   Branché sur l'API réelle (backend/routes/posts.js).
++   Chaque publication est rattachée à une cause réelle (backend/routes/causes.js).
+    ========================================= */
+ 
+ (function () {
+-  const DEMO_PUBS = [
+-    { id: 1, title: 'Crise humanitaire en RDC : état des lieux', slug: 'crise-humanitaire-rdc-etat-lieux', summary: 'Panorama de la situation humanitaire dans les provinces orientales de la RDC.', content: 'La République Démocratique du Congo fait face à une crise humanitaire majeure depuis plusieurs années. Les provinces du Nord-Kivu, Sud-Kivu et Ituri sont les plus touchées par les conflits armés et les déplacements forcés de populations.', image: '', category: 'Urgence', status: 'published', featured: true, date: '2026-09-01', seo_title: 'Crise RDC HumanitAID', seo_desc: 'État de la crise humanitaire en RDC' },
+-    { id: 2, title: 'Campagne d\'eau potable : résultats du trimestre', slug: 'campagne-eau-potable-resultats', summary: 'Les résultats de notre programme d\'accès à l\'eau potable dans le Sud-Kivu.', content: 'Au cours du dernier trimestre, notre programme a permis de fournir de l\'eau potable à plus de 35 000 personnes dans les zones rurales du Sud-Kivu.', image: '', category: 'Rapport', status: 'published', featured: false, date: '2026-08-28', seo_title: 'Eau potable RDC', seo_desc: 'Résultats programme eau' },
+-    { id: 3, title: 'Écoles temporaires : un espoir pour 2 400 enfants', slug: 'ecoles-temporaires-espoir-enfants', summary: 'Mise en place d\'écoles temporaires pour les enfants déplacés.', content: 'HumanitAID a ouvert 12 écoles temporaires dans les camps de déplacés, offrant un enseignement à 2 400 enfants qui n\'avaient plus accès à l\'éducation.', image: '', category: 'Terrain', status: 'published', featured: true, date: '2026-08-20', seo_title: 'Écoles temporaires RDC', seo_desc: 'Éducation enfants déplacés' },
+-    { id: 4, title: 'Appel aux dons : urgence alimentaire', slug: 'appel-dons-urgence-alimentaire', summary: 'L\'insécurité alimentaire touche 27 millions de personnes en RDC.', content: 'Face à l\'aggravation de la crise alimentaire, HumanitAID lance un appel urgent pour fournir des rations alimentaires aux familles les plus vulnérables.', image: '', category: 'Urgence', status: 'draft', featured: false, date: '2026-09-03', seo_title: 'Urgence alimentaire RDC', seo_desc: 'Appel aux dons alimentation' },
+-    { id: 5, title: 'Partenariat avec l\'ONU : nuevo acuerdo', slug: 'partenariat-onu-nuevo-acuerdo', summary: 'Signature d\'un accord de coopération avec le PAM.', content: 'HumanitAID a signé un accord de coopération avec le Programme Alimentaire Mondial pour renforcer la distribution alimentaire dans les zones difficiles d\'accès.', image: '', category: 'Partenariat', status: 'scheduled', featured: false, date: '2026-09-10', seo_title: 'Partenariat PAM', seo_desc: 'Coopération HumanitAID PAM' },
+-    { id: 6, title: 'Témoignage d\'une infirmière de terrain', slug: 'temoinage-infirmiere-terrain', summary: 'Sandra raconte son expérience dans un centre de santé du Nord-Kivu.', content: '« Chaque jour, nous recevons des dizaines de patients. Les blessures par armes à feu sont malheureusement très fréquentes. Mais nous ne lâchons rien. »', image: '', category: 'Témoignage', status: 'archived', featured: false, date: '2026-07-15', seo_title: 'Témoignage infirmière', seo_desc: 'Récit terrain RDC' }
+-  ];
+-
+-  let pubs = [...DEMO_PUBS];
++  let pubs = [];
++  let causesList = [];
+   let currentFilter = 'all';
+   let searchQuery = '';
+   let editingPub = null;
++  let loadError = null;
+ 
+-  function filtered() {
+-    let list = pubs;
+-    if (currentFilter !== 'all') list = list.filter(p => p.status === currentFilter);
+-    if (searchQuery) {
+-      const q = searchQuery.toLowerCase();
+-      list = list.filter(p => p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
++  async function loadCauses() {
++    const data = await App.api('/causes');
++    causesList = (data && data.causes) || [];
++  }
++
++  async function loadPubs(container) {
++    container.innerHTML = '<div class="section-header"><h2>Publications</h2></div><p class="text-muted">Chargement…</p>';
++    const qs = new URLSearchParams();
++    if (currentFilter !== 'all') qs.set('status', currentFilter);
++    if (searchQuery) qs.set('search', searchQuery);
++    qs.set('limit', '100');
++
++    const data = await App.api(`/posts?${qs.toString()}`);
++    if (!data || !data.posts) {
++      loadError = true;
++      pubs = [];
++    } else {
++      loadError = false;
++      pubs = data.posts;
+     }
+-    return list;
++    renderList(container);
++  }
++
++  function causeLabel(cause_id) {
++    const cause = causesList.find(c => c.id === cause_id);
++    return cause ? cause.title : '— Aucune cause —';
+   }
+ 
+   function renderList(container) {
+-    const statusCounts = { all: pubs.length, published: pubs.filter(p => p.status === 'published').length, draft: pubs.filter(p => p.status === 'draft').length, scheduled: pubs.filter(p => p.status === 'scheduled').length, archived: pubs.filter(p => p.status === 'archived').length };
++    if (loadError) {
++      container.innerHTML = `
++        <div class="section-header"><h2>Publications</h2></div>
++        <p class="text-muted">Impossible de charger les publications depuis le serveur. Vérifiez la connexion à l'API.</p>
++        <button class="btn btn-secondary" id="retry-pubs">Réessayer</button>
++      `;
++      document.getElementById('retry-pubs').addEventListener('click', () => loadPubs(container));
++      return;
++    }
++
++    const isTrash = currentFilter === 'trashed';
+ 
+     container.innerHTML = `
+       <div class="section-header">
+-        <h2>Publications <span class="demo-badge">DEMO</span></h2>
+-        <button class="btn btn-primary" id="new-pub-btn">+ Nouvelle publication</button>
++        <h2>Publications</h2>
++        ${!isTrash ? '<button class="btn btn-primary" id="new-pub-btn">+ Nouvelle publication</button>' : ''}
+       </div>
+       <div class="tabs">
+-        <button class="tab ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">Toutes (${statusCounts.all})</button>
+-        <button class="tab ${currentFilter === 'published' ? 'active' : ''}" data-filter="published">Publiées (${statusCounts.published})</button>
+-        <button class="tab ${currentFilter === 'draft' ? 'active' : ''}" data-filter="draft">Brouillons (${statusCounts.draft})</button>
+-        <button class="tab ${currentFilter === 'scheduled' ? 'active' : ''}" data-filter="scheduled">Planifiées (${statusCounts.scheduled})</button>
+-        <button class="tab ${currentFilter === 'archived' ? 'active' : ''}" data-filter="archived">Archivées (${statusCounts.archived})</button>
++        <button class="tab ${currentFilter === 'all' ? 'active' : ''}" data-filter="all">Toutes</button>
++        <button class="tab ${currentFilter === 'published' ? 'active' : ''}" data-filter="published">Publiées</button>
++        <button class="tab ${currentFilter === 'draft' ? 'active' : ''}" data-filter="draft">Brouillons</button>
++        <button class="tab ${currentFilter === 'scheduled' ? 'active' : ''}" data-filter="scheduled">Planifiées</button>
++        <button class="tab ${currentFilter === 'archived' ? 'active' : ''}" data-filter="archived">Archivées</button>
++        <button class="tab ${currentFilter === 'trashed' ? 'active' : ''}" data-filter="trashed">Corbeille</button>
+       </div>
+       <div class="toolbar">
+         <div class="toolbar-search">
+           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+-          <input type="text" placeholder="Rechercher..." id="pub-search" value="${searchQuery}">
++          <input type="text" placeholder="Rechercher..." id="pub-search" value="${escHtml(searchQuery)}">
+         </div>
+       </div>
+       <div class="table-wrapper">
+@@ -53,6 +77,7 @@
+           <thead>
+             <tr>
+               <th>Titre</th>
++              <th>Cause</th>
+               <th>Catégorie</th>
+               <th>Statut</th>
+               <th>Date</th>
+@@ -60,57 +85,69 @@
+             </tr>
+           </thead>
+           <tbody>
+-            ${filtered().map(p => `
++            ${pubs.map(p => `
+               <tr>
+-                <td><strong>${p.title}</strong>${p.featured ? ' ⭐' : ''}</td>
+-                <td><span class="badge badge-info">${p.category}</span></td>
++                <td><strong>${escHtml(p.title)}</strong>${p.is_featured ? ' ⭐' : ''}</td>
++                <td>${p.cause_title ? escHtml(p.cause_title) : '<span class="text-muted">—</span>'}</td>
++                <td>${p.category ? `<span class="badge badge-info">${escHtml(p.category)}</span>` : ''}</td>
+                 <td>${App.statusBadge(p.status)}</td>
+-                <td>${App.formatDate(p.date)}</td>
++                <td>${App.formatDate(p.published_at || p.created_at)}</td>
+                 <td class="table-actions">
+-                  <button class="btn btn-secondary btn-sm edit-pub" data-id="${p.id}">Modifier</button>
+-                  <button class="btn btn-ghost btn-sm delete-pub" data-id="${p.id}">Supprimer</button>
++                  ${isTrash
++                    ? `<button class="btn btn-secondary btn-sm restore-pub" data-id="${p.id}">Restaurer</button>`
++                    : `<button class="btn btn-secondary btn-sm edit-pub" data-id="${p.id}">Modifier</button>
++                       <button class="btn btn-ghost btn-sm delete-pub" data-id="${p.id}">Supprimer</button>`}
+                 </td>
+               </tr>
+             `).join('')}
+-            ${filtered().length === 0 ? '<tr><td colspan="5" class="text-muted" style="text-align:center;padding:40px;">Aucune publication trouvée</td></tr>' : ''}
++            ${pubs.length === 0 ? `<tr><td colspan="6" class="text-muted" style="text-align:center;padding:40px;">${isTrash ? 'Corbeille vide' : 'Aucune publication trouvée'}</td></tr>` : ''}
+           </tbody>
+         </table>
+       </div>
+     `;
+ 
+     container.querySelectorAll('.tab').forEach(t => {
+-      t.addEventListener('click', () => { currentFilter = t.dataset.filter; renderList(container); });
++      t.addEventListener('click', () => { currentFilter = t.dataset.filter; loadPubs(container); });
+     });
+ 
+-    document.getElementById('pub-search').addEventListener('input', (e) => {
++    const searchInput = document.getElementById('pub-search');
++    let searchTimer;
++    searchInput.addEventListener('input', (e) => {
+       searchQuery = e.target.value;
+-      renderList(container);
++      clearTimeout(searchTimer);
++      searchTimer = setTimeout(() => loadPubs(container), 300);
+     });
+ 
+-    document.getElementById('new-pub-btn').addEventListener('click', () => {
+-      editingPub = null;
+-      renderForm(container);
+-    });
++    const newBtn = document.getElementById('new-pub-btn');
++    if (newBtn) newBtn.addEventListener('click', () => { editingPub = null; renderForm(container); });
+ 
+     container.querySelectorAll('.edit-pub').forEach(btn => {
+       btn.addEventListener('click', () => {
+-        editingPub = pubs.find(p => p.id === parseInt(btn.dataset.id));
++        editingPub = pubs.find(p => p.id === btn.dataset.id);
+         renderForm(container);
+       });
+     });
+ 
+     container.querySelectorAll('.delete-pub').forEach(btn => {
+       btn.addEventListener('click', () => {
+-        App.confirmModal('Supprimer', 'Supprimer cette publication ?', () => {
+-          pubs = pubs.filter(p => p.id !== parseInt(btn.dataset.id));
+-          renderList(container);
++        App.confirmModal('Supprimer', 'Déplacer cette publication vers la corbeille ?', async () => {
++          await App.api(`/posts/${btn.dataset.id}`, { method: 'DELETE' });
++          loadPubs(container);
+         });
+       });
+     });
++
++    container.querySelectorAll('.restore-pub').forEach(btn => {
++      btn.addEventListener('click', async () => {
++        await App.api(`/posts/${btn.dataset.id}/restore`, { method: 'POST' });
++        loadPubs(container);
++      });
++    });
+   }
+ 
+   function renderForm(container) {
+-    const p = editingPub || { title: '', slug: '', summary: '', content: '', image: '', category: 'Urgence', status: 'draft', featured: false, date: new Date().toISOString().split('T')[0], seo_title: '', seo_desc: '' };
++    const p = editingPub || { title: '', slug: '', summary: '', content: '', featured_image: '', video_url: '', category: 'Urgence', cause_id: '', status: 'draft', is_featured: false, published_at: '', seo_title: '', seo_description: '' };
++    const pubDate = p.published_at ? new Date(p.published_at).toISOString().split('T')[0] : '';
+ 
+     container.innerHTML = `
+       <div class="section-header">
+@@ -121,46 +158,52 @@
+         <div class="form-section-title">Contenu</div>
+         <div class="form-group">
+           <label>Titre</label>
+-          <input type="text" id="pub-title" value="${p.title}">
++          <input type="text" id="pub-title" value="${escHtml(p.title)}">
+         </div>
+         <div class="form-group">
+           <label>Slug</label>
+-          <input type="text" id="pub-slug" value="${p.slug}">
++          <input type="text" id="pub-slug" value="${escHtml(p.slug || '')}">
+         </div>
+         <div class="form-group">
+           <label>Résumé</label>
+-          <textarea id="pub-summary" rows="3">${p.summary}</textarea>
++          <textarea id="pub-summary" rows="3">${escHtml(p.summary || '')}</textarea>
+         </div>
+         <div class="form-group">
+           <label>Contenu</label>
+-          <textarea id="pub-content" rows="10" style="max-height:400px;">${p.content}</textarea>
++          <textarea id="pub-content" rows="10" style="max-height:400px;">${escHtml(p.content || '')}</textarea>
+         </div>
+       </div>
+       <div class="form-section">
+         <div class="form-section-title">Média</div>
+         <div class="form-group">
+           <label>Image à la une (URL)</label>
+-          <input type="url" id="pub-image" value="${p.image}" placeholder="https://...">
++          <input type="url" id="pub-image" value="${escHtml(p.featured_image || '')}" placeholder="https://...">
+         </div>
+         <div class="form-group">
+           <label>Vidéo (URL)</label>
+-          <input type="url" id="pub-video" placeholder="https://youtube.com/...">
++          <input type="url" id="pub-video" value="${escHtml(p.video_url || '')}" placeholder="https://youtube.com/...">
+         </div>
+       </div>
+       <div class="form-section">
+         <div class="form-section-title">Paramètres</div>
+         <div class="form-row">
++          <div class="form-group">
++            <label>Cause associée</label>
++            <select id="pub-cause">
++              <option value="">— Aucune cause —</option>
++              ${causesList.map(c => `<option value="${c.id}" ${p.cause_id === c.id ? 'selected' : ''}>${escHtml(c.title)}</option>`).join('')}
++            </select>
++          </div>
+           <div class="form-group">
+             <label>Catégorie</label>
+             <select id="pub-category">
+-              <option ${p.category === 'Urgence' ? 'selected' : ''}>Urgence</option>
+-              <option ${p.category === 'Terrain' ? 'selected' : ''}>Terrain</option>
+-              <option ${p.category === 'Témoignage' ? 'selected' : ''}>Témoignage</option>
+-              <option ${p.category === 'Rapport' ? 'selected' : ''}>Rapport</option>
+-              <option ${p.category === 'Partenariat' ? 'selected' : ''}>Partenariat</option>
+-              <option ${p.category === 'Plaidoyer' ? 'selected' : ''}>Plaidoyer</option>
++              ${['Urgence', 'Terrain', 'Témoignage', 'Rapport', 'Partenariat', 'Plaidoyer'].map(cat =>
++                `<option ${p.category === cat ? 'selected' : ''}>${cat}</option>`
++              ).join('')}
+             </select>
+           </div>
++        </div>
++        <div class="form-row">
+           <div class="form-group">
+             <label>Statut</label>
+             <select id="pub-status">
+@@ -170,29 +213,28 @@
+               <option value="archived" ${p.status === 'archived' ? 'selected' : ''}>Archivé</option>
+             </select>
+           </div>
+-        </div>
+-        <div class="form-row">
+           <div class="form-group">
+             <label>Date de publication</label>
+-            <input type="date" id="pub-date" value="${p.date}">
+-          </div>
+-          <div class="form-check" style="margin-top:24px;">
+-            <input type="checkbox" id="pub-featured" ${p.featured ? 'checked' : ''}>
+-            <label for="pub-featured">Article à la une</label>
++            <input type="date" id="pub-date" value="${pubDate}">
+           </div>
+         </div>
++        <div class="form-check" style="margin-top:12px;">
++          <input type="checkbox" id="pub-featured" ${p.is_featured ? 'checked' : ''}>
++          <label for="pub-featured">Article à la une</label>
++        </div>
+       </div>
+       <div class="form-section">
+         <div class="form-section-title">SEO</div>
+         <div class="form-group">
+           <label>Titre SEO</label>
+-          <input type="text" id="pub-seo-title" value="${p.seo_title}">
++          <input type="text" id="pub-seo-title" value="${escHtml(p.seo_title || '')}">
+         </div>
+         <div class="form-group">
+           <label>Description SEO</label>
+-          <textarea id="pub-seo-desc" rows="2">${p.seo_desc}</textarea>
++          <textarea id="pub-seo-desc" rows="2">${escHtml(p.seo_description || '')}</textarea>
+         </div>
+       </div>
++      <p class="text-sm text-muted" id="pub-save-error" hidden></p>
+       <div class="btn-group" style="justify-content:flex-end;">
+         <button class="btn btn-secondary" id="save-draft-btn">Enregistrer brouillon</button>
+         <button class="btn btn-primary" id="publish-btn">${editingPub ? 'Mettre à jour' : 'Publier'}</button>
+@@ -205,40 +247,61 @@
+       }
+     });
+ 
+-    document.getElementById('back-to-list').addEventListener('click', () => renderList(container));
++    document.getElementById('back-to-list').addEventListener('click', () => loadPubs(container));
+     document.getElementById('save-draft-btn').addEventListener('click', () => savePub(container, 'draft'));
+     document.getElementById('publish-btn').addEventListener('click', () => savePub(container, document.getElementById('pub-status').value));
+   }
+ 
+-  function savePub(container, status) {
++  async function savePub(container, status) {
++    const dateVal = document.getElementById('pub-date').value;
+     const data = {
+       title: document.getElementById('pub-title').value,
+       slug: document.getElementById('pub-slug').value,
+       summary: document.getElementById('pub-summary').value,
+       content: document.getElementById('pub-content').value,
+-      image: document.getElementById('pub-image').value,
++      featured_image: document.getElementById('pub-image').value,
++      video_url: document.getElementById('pub-video').value,
++      cause_id: document.getElementById('pub-cause').value || null,
+       category: document.getElementById('pub-category').value,
+       status: status,
+-      featured: document.getElementById('pub-featured').checked,
+-      date: document.getElementById('pub-date').value,
++      is_featured: document.getElementById('pub-featured').checked,
++      published_at: status === 'published' ? (dateVal ? new Date(dateVal).toISOString() : new Date().toISOString()) : (dateVal ? new Date(dateVal).toISOString() : null),
+       seo_title: document.getElementById('pub-seo-title').value,
+-      seo_desc: document.getElementById('pub-seo-desc').value
++      seo_description: document.getElementById('pub-seo-desc').value,
+     };
+ 
+-    if (editingPub) {
+-      Object.assign(editingPub, data);
+-    } else {
+-      data.id = Math.max(0, ...pubs.map(p => p.id)) + 1;
+-      pubs.push(data);
++    if (!data.title || data.title.trim().length < 3) {
++      const err = document.getElementById('pub-save-error');
++      err.hidden = false;
++      err.textContent = 'Le titre doit contenir au moins 3 caractères.';
++      return;
+     }
++
++    const btn = editingPub ? document.getElementById('publish-btn') : document.getElementById('publish-btn');
++    btn.disabled = true;
++
++    const res = editingPub
++      ? await App.api(`/posts/${editingPub.id}`, { method: 'PUT', body: JSON.stringify({ ...data, id: editingPub.id }) })
++      : await App.api('/posts', { method: 'POST', body: JSON.stringify(data) });
++
++    btn.disabled = false;
++
++    if (!res || res.error) {
++      const err = document.getElementById('pub-save-error');
++      err.hidden = false;
++      err.textContent = (res && (res.error ? `${res.error}${res.details ? ' : ' + res.details.join(', ') : ''}` : null)) || 'Erreur de connexion au serveur.';
++      return;
++    }
++
+     editingPub = null;
+-    renderList(container);
++    loadPubs(container);
+   }
+ 
+-  App.registerPage('publications', function (container) {
++  App.registerPage('publications', async function (container) {
+     editingPub = null;
+     currentFilter = 'all';
+     searchQuery = '';
+-    renderList(container);
++    await loadCauses();
++    loadPubs(container);
+   });
+ })();
+diff --git a/backend/middleware/sanitizers.js b/backend/middleware/sanitizers.js
+index cc36cbf..c25ac02 100644
+--- a/backend/middleware/sanitizers.js
++++ b/backend/middleware/sanitizers.js
+@@ -1,5 +1,5 @@
+ const ALLOWED_COLUMNS = {
+-  posts: ['title', 'slug', 'summary', 'content', 'featured_image', 'video_url', 'category', 'location', 'status', 'is_featured', 'published_at', 'scheduled_at', 'seo_title', 'seo_description', 'og_image'],
++  posts: ['title', 'slug', 'summary', 'content', 'featured_image', 'video_url', 'category', 'cause_id', 'location', 'status', 'is_featured', 'published_at', 'scheduled_at', 'seo_title', 'seo_description', 'og_image'],
+   news: ['title', 'slug', 'summary', 'content', 'featured_image', 'video_url', 'category', 'status', 'is_featured', 'published_at', 'seo_title', 'seo_description', 'og_image'],
+   testimonials: ['author_name', 'category', 'location', 'content', 'photo_url', 'video_url', 'status', 'display_order'],
+   slides: ['type', 'title', 'subtitle', 'description', 'image_url', 'video_url', 'cta_text', 'cta_url', 'is_active', 'is_main', 'duration', 'display_order'],
+diff --git a/backend/routes/posts.js b/backend/routes/posts.js
+index a476e8e..e3ee45c 100644
+--- a/backend/routes/posts.js
++++ b/backend/routes/posts.js
+@@ -9,92 +9,52 @@ const { buildUpdateQuery } = require('../middleware/sanitizers');
+ 
+ const router = express.Router();
+ 
++// ── Données de démonstration ────────────────────────────────────────
++// Ne sont jamais servies en production : gardées derrière env.demoMode,
++// qui n'est actif que si la variable d'environnement DEMO_MODE=true est
++// explicitement définie (jamais par défaut). Voir backend/config/env.js.
+ const DEMO_POSTS = [
+   {
+     id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+-    title: 'Crise humanitaire à Goma : 500 000 déplacés en urgence',
+-    slug: 'crise-humanitaire-goma-500000-deplaces',
+-    excerpt: 'L\'escalade des violences à Goma a forcé plus de 500 000 personnes à quitter leurs foyers dans les dernières semaines.',
+-    content: '<p>La ville de Goma, dans le Nord-Kivu, fait face à l\'une des pires crises humanitaires de son histoire. Les affrontements armés entre groupes ont poussé des centaines de milliers de civils à fuir vers des zones déjà saturées.</p><p>HumanitAID a déployé 12 équipes sur le terrain pour fournir nourriture, eau potable et abris d\'urgence.</p>',
++    title: 'Exemple d\'article — Urgence',
++    slug: 'exemple-article-urgence',
++    excerpt: 'Ceci est un contenu de démonstration, affiché uniquement lorsque DEMO_MODE=true.',
++    content: '<p>Contenu de démonstration.</p>',
+     status: POST_STATUS.PUBLISHED,
+     category: 'Urgence',
+-    author_name: 'Dr. Marie Kahindo',
++    cause_id: null,
+     featured_image: null,
+     published_at: '2026-08-28T10:00:00Z',
+     created_at: '2026-08-27T14:30:00Z',
+-  },
+-  {
+-    id: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+-    title: 'Écoles mobiles : redonner un avenir aux enfants déplacés',
+-    slug: 'ecoles-mobiles-enfants-deplaces',
+-    excerpt: 'Notre programme d\'écoles mobiles a permis à 3 200 enfants de reprendre les cours dans les camps de déplacés du Sud-Kivu.',
+-    content: '<p>Depuis janvier 2026, HumanitAID a mis en place 45 écoles mobiles dans les sites de déplacement du Sud-Kivu. Ces écoles temporaires offrent un cadre sûr et un programme éducatif adapté aux enfants victimes du conflit.</p><p>Marie, 9 ans, nous raconte : "Quand je suis arrivée au camp, je ne savais pas si j\'allais jamais retourner à l\'école. Maintenant, je veux devenir médecin."</p>',
+-    status: POST_STATUS.PUBLISHED,
+-    category: 'Terrain',
+-    author_name: 'Jean-Pierre Mukendi',
+-    featured_image: null,
+-    published_at: '2026-08-20T08:00:00Z',
+-    created_at: '2026-08-19T16:00:00Z',
+-  },
+-  {
+-    id: '6ba7b811-9dad-11d1-80b4-00c04fd430c8',
+-    title: 'Témoignage de Fatima : survivante de violences sexuelles',
+-    slug: 'temoignage-fatima-survivante-violences',
+-    excerpt: 'Fatima, rescapée de violences sexuelles dans le Territoire de Rutshuru, partage son parcours de reconstruction.',
+-    content: '<p>Fatima a 24 ans. Elle a été victime de violences sexuelles lors d\'une attaque de son village en octobre 2025. Aujourd\'hui, grâce au soutien psychosocial d\'HumanitAID, elle reprend vie.</p><p>"Les conseillers m\'ont appris à ne pas avoir honte. Ce n\'est pas ma faute. Je veux que les autres femmes sachent qu\'il y a de l\'espoir."</p>',
+-    status: POST_STATUS.PUBLISHED,
+-    category: 'Témoignage',
+-    author_name: 'Sœur Grâce Nsimire',
+-    featured_image: null,
+-    published_at: '2026-08-15T12:00:00Z',
+-    created_at: '2026-08-14T09:00:00Z',
+-  },
+-  {
+-    id: 'c9bf9e57-1685-4c89-bafb-ff5af830be8a',
+-    title: 'Recherche urgente : financer l\'eau potable pour 200 000 personnes',
+-    slug: 'recherche-urgence-eau-potable',
+-    excerpt: 'Nous collectons 150 000 $ pour installer des systèmes de purification d\'eau dans les zones de déplacement.',
+-    content: '<p>L\'accès à l\'eau potable reste le défi numéro 1 dans les camps de déplacés. Les épidémies de choléra se multiplient faute d\'installations sanitaires adéquates.</p><p>HumanitAID prévoit l\'installation de 30 points d\'eau et 10 unités de purification mobiles d\'ici décembre 2026.</p>',
+-    status: POST_STATUS.PUBLISHED,
+-    category: 'Plaidoyer',
+-    author_name: 'Chef de projet Amina Lubala',
+-    featured_image: null,
+-    published_at: '2026-08-10T07:30:00Z',
+-    created_at: '2026-08-09T11:00:00Z',
+-  },
+-  {
+-    id: '3d8f8a1e-7b2c-4e5f-9a1d-6c3b8f2e4d70',
+-    title: 'Partenariat avec l\'UNICEF : renforcer la nutrition infantile',
+-    slug: 'partenariat-unicef-nutrition-infantile',
+-    excerpt: 'Un accord stratégique avec l\'UNICEF pour traiter 15 000 enfants souffrant de malnutrition aiguë dans le Ituri.',
+-    content: '<p>HumanitAID et l\'UNICEF ont signé un partenariat de 2 ans pour lutter contre la malnutrition infantile dans la province de l\'Ituri. Le programme inclut la distribution de nourriture thérapeutique, le dépistage et la sensibilisation communautaire.</p><p>Pierre, 3 ans, a été sauvé grâce au programme pilote. Son père témoigne : "Sans HumanitAID, mon fils ne serait plus là."</p>',
+-    status: POST_STATUS.PUBLISHED,
+-    category: 'Partenariat',
+-    author_name: 'Directeur Thomas Kasongo',
+-    featured_image: null,
+-    published_at: '2026-08-05T14:00:00Z',
+-    created_at: '2026-08-04T10:00:00Z',
++    deleted_at: null,
+   },
+   {
+     id: 'a1e2f3d4-5b6c-7d8e-9f0a-1b2c3d4e5f60',
+-    title: 'Rapport semestriel : 47 000 bénéficiaires en 6 mois',
+-    slug: 'rapport-semestriel-47000-beneficiaires',
+-    excerpt: 'Notre rapport d\'activité du premier semestre 2026 montre une hausse de 35% du nombre de bénéficiaires atteints.',
+-    content: '<p>Au cours du premier semestre 2026, HumanitAID a assisté 47 320 bénéficiaires directs à travers ses programmes d\'urgence, d\'éducation, de santé et de soutien psychosocial.</p><p>Les fonds collectés ont permis de construire 12 centres de santé, 8 écoles et de distribuer plus de 200 tonnes de vivres.</p>',
++    title: 'Exemple d\'article — Brouillon',
++    slug: 'exemple-article-brouillon',
++    excerpt: 'Ceci est un contenu de démonstration en brouillon.',
++    content: '<p>Contenu de démonstration.</p>',
+     status: POST_STATUS.DRAFT,
+     category: 'Rapport',
+-    author_name: 'Direction Générale',
++    cause_id: null,
+     featured_image: null,
+     published_at: null,
+     created_at: '2026-08-01T09:00:00Z',
++    deleted_at: null,
+   },
+ ];
+ 
++// GET /api/posts
++// Query params : status, cause_id, search, page, limit
++//   - par défaut : exclut la corbeille (deleted_at IS NULL)
++//   - ?status=trashed : liste uniquement la corbeille
+ router.get('/', async (req, res) => {
+   if (env.demoMode) {
+-    let posts = [...DEMO_POSTS];
+-    const { status, search, page = 1, limit = 10 } = req.query;
+-    if (status) posts = posts.filter((p) => p.status === status);
++    let posts = DEMO_POSTS.filter((p) => !p.deleted_at);
++    const { status, cause_id, search, page = 1, limit = 10 } = req.query;
++    if (status === 'trashed') posts = DEMO_POSTS.filter((p) => p.deleted_at);
++    else if (status) posts = posts.filter((p) => p.status === status);
++    if (cause_id) posts = posts.filter((p) => p.cause_id === cause_id);
+     if (search) {
+       const q = search.toLowerCase();
+       posts = posts.filter((p) => p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q));
+@@ -104,16 +64,31 @@ router.get('/', async (req, res) => {
+   }
+ 
+   try {
+-    const { status, search, page = 1, limit = 10 } = req.query;
++    const { status, cause_id, search, page = 1, limit = 10 } = req.query;
+     let where = [];
+     let params = [];
+     let idx = 1;
+-    if (status) { where.push(`status = $${idx++}`); params.push(status); }
+-    if (search) { where.push(`(title ILIKE $${idx} OR excerpt ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
++
++    if (status === 'trashed') {
++      where.push('p.deleted_at IS NOT NULL');
++    } else {
++      where.push('p.deleted_at IS NULL');
++      if (status) { where.push(`p.status = $${idx++}`); params.push(status); }
++    }
++    if (cause_id) { where.push(`p.cause_id = $${idx++}`); params.push(cause_id); }
++    if (search) { where.push(`(p.title ILIKE $${idx} OR p.summary ILIKE $${idx})`); params.push(`%${search}%`); idx++; }
++
+     const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
+     const offset = (page - 1) * limit;
+-    const countRes = await query(`SELECT COUNT(*) FROM posts ${whereClause}`, params);
+-    const { rows } = await query(`SELECT * FROM posts ${whereClause} ORDER BY created_at DESC LIMIT $${idx++} OFFSET $${idx++}`, [...params, Number(limit), offset]);
++    const countRes = await query(`SELECT COUNT(*) FROM posts p ${whereClause}`, params);
++    const { rows } = await query(
++      `SELECT p.*, c.slug AS cause_slug, c.title AS cause_title
++       FROM posts p
++       LEFT JOIN causes c ON c.id = p.cause_id
++       ${whereClause}
++       ORDER BY p.created_at DESC LIMIT $${idx++} OFFSET $${idx++}`,
++      [...params, Number(limit), offset]
++    );
+     return res.json({ posts: rows, total: Number(countRes.rows[0].count), page: Number(page), limit: Number(limit) });
+   } catch (err) {
+     console.error('[Posts] List error:', err);
+@@ -129,7 +104,12 @@ router.get('/:id', async (req, res) => {
+   }
+ 
+   try {
+-    const { rows } = await query('SELECT * FROM posts WHERE id = $1 OR slug = $1', [req.params.id]);
++    const { rows } = await query(
++      `SELECT p.*, c.slug AS cause_slug, c.title AS cause_title
++       FROM posts p LEFT JOIN causes c ON c.id = p.cause_id
++       WHERE (p.id::text = $1 OR p.slug = $1) AND p.deleted_at IS NULL`,
++      [req.params.id]
++    );
+     if (!rows[0]) return res.status(404).json({ error: 'Article introuvable' });
+     return res.json({ post: rows[0] });
+   } catch (err) {
+@@ -140,15 +120,15 @@ router.get('/:id', async (req, res) => {
+ 
+ router.post('/', auth, requireMinRole(ROLES.EDITOR), validationMiddleware(validatePost), async (req, res) => {
+   if (env.demoMode) {
+-    return res.json({ post: { id: 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80', ...req.body, created_at: new Date().toISOString() } });
++    return res.json({ post: { id: 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80', ...req.body, created_at: new Date().toISOString(), deleted_at: null } });
+   }
+ 
+   try {
+-    const { title, slug, summary, content, status, category, featured_image, location, is_featured } = req.body;
++    const { title, slug, summary, content, status, category, cause_id, featured_image, location, is_featured } = req.body;
+     const { rows } = await query(
+-      `INSERT INTO posts (title, slug, summary, content, status, category, author_id, featured_image, location, is_featured)
+-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+-      [title, slug, summary, content, status || 'draft', category, req.user.id, featured_image, location || null, is_featured || false]
++      `INSERT INTO posts (title, slug, summary, content, status, category, cause_id, author_id, featured_image, location, is_featured)
++       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
++      [title, slug, summary, content, status || 'draft', category, cause_id || null, req.user.id, featured_image, location || null, is_featured || false]
+     );
+     return res.status(201).json({ post: rows[0] });
+   } catch (err) {
+@@ -176,19 +156,65 @@ router.put('/:id', auth, requireMinRole(ROLES.EDITOR), async (req, res) => {
+   }
+ });
+ 
++// DELETE /api/posts/:id — suppression douce (corbeille), jamais définitive ici.
+ router.delete('/:id', auth, requireMinRole(ROLES.ADMIN), async (req, res) => {
+   if (env.demoMode) {
+-    return res.json({ message: 'Article supprimé' });
++    const post = DEMO_POSTS.find((p) => p.id === req.params.id);
++    if (post) post.deleted_at = new Date().toISOString();
++    return res.json({ message: 'Article déplacé dans la corbeille' });
+   }
+ 
+   try {
+-    const { rowCount } = await query('DELETE FROM posts WHERE id = $1', [req.params.id]);
+-    if (rowCount === 0) return res.status(404).json({ error: 'Article introuvable' });
+-    return res.json({ message: 'Article supprimé' });
++    const { rows } = await query(
++      'UPDATE posts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id',
++      [req.params.id]
++    );
++    if (!rows[0]) return res.status(404).json({ error: 'Article introuvable' });
++    return res.json({ message: 'Article déplacé dans la corbeille' });
+   } catch (err) {
+     console.error('[Posts] Delete error:', err);
+     return res.status(500).json({ error: 'Erreur serveur' });
+   }
+ });
+ 
++// POST /api/posts/:id/restore — restaurer un article depuis la corbeille.
++router.post('/:id/restore', auth, requireMinRole(ROLES.ADMIN), async (req, res) => {
++  if (env.demoMode) {
++    const post = DEMO_POSTS.find((p) => p.id === req.params.id);
++    if (post) post.deleted_at = null;
++    return res.json({ message: 'Article restauré' });
++  }
++
++  try {
++    const { rows } = await query(
++      'UPDATE posts SET deleted_at = NULL WHERE id = $1 RETURNING *',
++      [req.params.id]
++    );
++    if (!rows[0]) return res.status(404).json({ error: 'Article introuvable' });
++    return res.json({ post: rows[0], message: 'Article restauré' });
++  } catch (err) {
++    console.error('[Posts] Restore error:', err);
++    return res.status(500).json({ error: 'Erreur serveur' });
++  }
++});
++
++// DELETE /api/posts/:id/permanent — suppression définitive depuis la corbeille uniquement.
++router.delete('/:id/permanent', auth, requireMinRole(ROLES.SUPER_ADMIN), async (req, res) => {
++  if (env.demoMode) {
++    return res.json({ message: 'Article supprimé définitivement' });
++  }
++
++  try {
++    const { rowCount } = await query(
++      'DELETE FROM posts WHERE id = $1 AND deleted_at IS NOT NULL',
++      [req.params.id]
++    );
++    if (rowCount === 0) return res.status(404).json({ error: 'Article introuvable dans la corbeille' });
++    return res.json({ message: 'Article supprimé définitivement' });
++  } catch (err) {
++    console.error('[Posts] Permanent delete error:', err);
++    return res.status(500).json({ error: 'Erreur serveur' });
++  }
++});
++
+ module.exports = router;
+diff --git a/database/migrations/002_posts_cause_relation_and_trash.sql b/database/migrations/002_posts_cause_relation_and_trash.sql
+new file mode 100644
+index 0000000..6307309
+--- /dev/null
++++ b/database/migrations/002_posts_cause_relation_and_trash.sql
+@@ -0,0 +1,22 @@
++-- ════════════════════════════════════════════════════════════════════
++-- HUMANITAID — Migration 002 : Relation Publication → Cause + Corbeille
++--
++-- Application : PostgreSQL (Supabase) — idempotente, peut être relancée.
++--   psql "$DATABASE_URL" -f database/migrations/002_posts_cause_relation_and_trash.sql
++--
++-- Contexte : le CMS admin doit pouvoir rattacher une publication à l'une
++-- des 5 causes officielles (posts.cause_id), et une suppression doit
++-- rester récupérable (posts.deleted_at) plutôt que définitive, comme
++-- décrit dans HUMANITAID_NOUVELLES_FONCTIONNALITES.md §2.2 / §2.3 / §3.4.
++-- ════════════════════════════════════════════════════════════════════
++
++-- 1. Relation publication → cause (une cause peut avoir plusieurs publications).
++ALTER TABLE posts ADD COLUMN IF NOT EXISTS cause_id UUID REFERENCES causes(id) ON DELETE SET NULL;
++
++CREATE INDEX IF NOT EXISTS idx_posts_cause_id ON posts (cause_id);
++
++-- 2. Corbeille (soft-delete) : une publication supprimée reste en base,
++--    récupérable, et n'apparaît plus dans les listes publiques/admin par défaut.
++ALTER TABLE posts ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
++
++CREATE INDEX IF NOT EXISTS idx_posts_deleted_at ON posts (deleted_at);
+diff --git a/frontend/index.html b/frontend/index.html
+index b0c5047..519b24c 100644
+--- a/frontend/index.html
++++ b/frontend/index.html
+@@ -77,9 +77,9 @@
+   <!-- Skip to content -->
+   <a href="#main-content" class="skip-link">Aller au contenu principal</a>
+ 
+-  <!-- Demo banner (shown only when API unreachable / demo data active) -->
++  <!-- Bandeau affiché uniquement si l'API est injoignable — aucun contenu fictif n'est jamais affiché -->
+   <div class="demo-banner" role="status" id="demo-banner" hidden>
+-    Mode démo — Les contenus affichés sont des exemples. Le serveur de données est injoignable.
++    Certains contenus n'ont pas pu être chargés. Merci de réessayer dans quelques instants.
+   </div>
+ 
+   <!-- ═══ BANDEAU DÉFILANT ═══ -->
+@@ -105,6 +105,11 @@
+ 
+   <!-- ═══ NAVIGATION ═══ -->
+   <nav class="main-nav" role="navigation" aria-label="Navigation principale">
++    <button class="hamburger" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu">
++      <span></span>
++      <span></span>
++      <span></span>
++    </button>
+     <div class="nav-logo">Humanit<span>A</span><em>ID</em></div>
+     <ul class="nav-links">
+       <li><a href="#collectes">Collectes</a></li>
+@@ -118,17 +123,13 @@
+       <button class="theme-btn active" data-theme-value="dark" aria-label="Mode sombre" title="Sombre"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+       <button class="theme-btn" data-theme-value="system" aria-label="Mode système" title="Système"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>
+     </div>
+-    <button class="hamburger" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu">
+-      <span></span>
+-      <span></span>
+-      <span></span>
+-    </button>
+   </nav>
+ 
+   <!-- Mobile menu -->
+   <div class="mobile-overlay" id="mobile-overlay"></div>
+   <div class="mobile-menu" id="mobile-menu" role="dialog" aria-label="Menu mobile" aria-hidden="true">
+     <button class="mobile-close" aria-label="Fermer le menu">&times;</button>
++    <a href="#accueil">Accueil</a>
+     <a href="#collectes">Collectes</a>
+     <a href="#causes">Causes</a>
+     <a href="#temoignages">Témoignages</a>
+diff --git a/frontend/js/api.js b/frontend/js/api.js
+index e095107..92042a2 100644
+--- a/frontend/js/api.js
++++ b/frontend/js/api.js
+@@ -62,306 +62,6 @@ const api = {
+     }
+   },
+ };
+-
+-/* ═══════════════════════════════════════
+-   DEMO DATA — Fallback when API is down
+-   ═══════════════════════════════════════ */
+-
+-const DEMO_DATA = {
+-  slides: [
+-    {
+-      id: 1,
+-      title: 'Des millions de vies<br>attendent votre <span class="accent">générosité</span>',
+-      caption: '« Notre camp de Kanyabayonga abrite 12 000 personnes. Les enfants mangent une fois par jour. S\'il vous plaît, n\'oubliez pas notre existence. »\n— Marie-Claire, déplacée, Nord-Kivu',
+-      badge: 'Crise humanitaire active — Est de la RDC',
+-      gradient: 'slide-1',
+-      icon: 'tent',
+-      image: '/assets/images/Kinsella-RDC_002.jpg',
+-    },
+-    {
+-      id: 2,
+-      title: 'Un enfant orphelin<br>mérite un <span class="accent">avenir</span>',
+-      caption: '« J\'ai 9 ans et je dors dans la rue depuis 4 mois. Je voudrais aller à l\'école comme les autres enfants. »\n— Joël, orphelin, Ituri',
+-      badge: 'Aide d\'urgence requise — Ituri',
+-      gradient: 'slide-2',
+-      icon: 'baby',
+-      image: '/assets/images/4u6a4825.jpg',
+-    },
+-    {
+-      id: 3,
+-      title: 'Chaque femme<br>mérite sa <span class="accent">dignité</span>',
+-      caption: '« On nous a tout pris — nos maris, nos maisons, notre sécurité. Mais notre courage, jamais. »\n— Espérance, veuve de guerre, Sud-Kivu',
+-      badge: 'Soutien aux femmes — Sud-Kivu',
+-      gradient: 'slide-3',
+-      icon: 'dove',
+-      image: '/assets/images/IMG-20230216-WA0001.jpg',
+-    },
+-    {
+-      id: 4,
+-      title: 'Ensemble, construisons<br>un Congo <span class="accent">humain</span>',
+-      caption: '« Grâce à mon fauteuil roulant, je peux de nouveau regarder mes enfants dans les yeux, debout. »\n— Théodore, amputé des deux jambes, Beni',
+-      badge: 'Inclusion & Dignité — Nord-Kivu',
+-      gradient: 'slide-4',
+-      icon: 'hands',
+-      image: '/assets/images/stock_mm10038_hkcd7189.jpg',
+-    },
+-  ],
+-
+-  causes: [
+-    {
+-      slug: 'deplaces',
+-      title: 'Déplacés & Réfugiés de guerre',
+-      description: 'Soutien aux millions de personnes déplacées de force dans l\'Est de la RDC.',
+-      goal: 500000,
+-      collected: 347000,
+-      donors: 1847,
+-      daysLeft: 42,
+-      icon: 'tent',
+-      priority: 'Priorité 1',
+-      detail: '7,2 millions de Congolais ont fui leurs foyers à cause des violences armées. Ils vivent dans des camps de fortune sans eau, nourriture ni soins.',
+-      link: 'Aider maintenant',
+-      bgClass: 'cause-bg-1',
+-      image: '/assets/images/13d18a6858b6553f46f2f6df6a21f294_XL.jpg',
+-    },
+-    {
+-      slug: 'orphelins',
+-      title: 'Enfants Orphelins en zones de conflit',
+-      description: 'Protection et éducation pour les enfants ayant perdu leurs parents.',
+-      goal: 350000,
+-      collected: 198750,
+-      donors: 2104,
+-      daysLeft: 58,
+-      icon: 'baby',
+-      priority: 'Priorité 2',
+-      detail: 'Des milliers d\'enfants ont perdu leurs parents dans les conflits. Sans famille ni tuteur, ils sont livrés à eux-mêmes dans des zones de guerre actives.',
+-      link: 'Protéger un enfant',
+-      bgClass: 'cause-bg-2',
+-      image: '/assets/images/image.jpg',
+-    },
+-    {
+-      slug: 'veuves',
+-      title: 'Veuves & Femmes survivantes de violences',
+-      description: 'Accompagnement psychosocial et soutien économique pour les femmes survivantes.',
+-      goal: 280000,
+-      collected: 156900,
+-      donors: 983,
+-      daysLeft: 35,
+-      icon: 'dove',
+-      priority: 'Priorité 3',
+-      detail: 'Veuves de guerre, survivantes de violences sexuelles — ces femmes portent des blessures invisibles et ont besoin de soins, de justice et de dignité.',
+-      link: 'Soutenir les femmes',
+-      bgClass: 'cause-bg-3',
+-      image: '/assets/images/f368fac771effcea1461751d4cbc3fb4.jpg',
+-    },
+-    {
+-      slug: 'victimes',
+-      title: 'Victimes de violences armées',
+-      description: 'Soins médicaux d\'urgence et réhabilitation pour les victimes.',
+-      goal: 200000,
+-      collected: 89200,
+-      donors: 741,
+-      daysLeft: 70,
+-      icon: 'bandage',
+-      priority: 'Priorité 4',
+-      detail: 'Blessés par balles, mines ou machettes, ces survivants ont besoin de chirurgie d\'urgence et d\'une réhabilitation longue.',
+-      link: 'Financer les soins',
+-      bgClass: 'cause-bg-4',
+-      image: '/assets/images/9f670ce3297232ccebf6f2f35886d451.jpg',
+-    },
+-    {
+-      slug: 'handicapes',
+-      title: 'Personnes Handicapées en zones de guerre',
+-      description: 'Accessibilité, réhabilitation et inclusion pour les personnes handicapées.',
+-      goal: 150000,
+-      collected: 89990,
+-      donors: 605,
+-      daysLeft: 90,
+-      icon: 'wheelchair',
+-      priority: 'Priorité 5',
+-      detail: 'En zones de guerre, le handicap devient une condamnation à mort. Privés de mobilité, de soins et d\'accès aux aides.',
+-      link: 'Ne pas les oublier',
+-      bgClass: 'cause-bg-5',
+-      image: '/assets/images/bc41a10fe9c6e4db4a007a70e2ab7122.jpg',
+-    },
+-  ],
+-
+-  testimonials: [
+-    {
+-      id: 1,
+-      category: 'deplaces',
+-      categoryLabel: 'Déplacé',
+-      text: '« J\'ai marché 11 jours avec mes 4 enfants pour fuir les combats de Rutshuru. Mon mari a été tué devant nous. Aujourd\'hui nous vivons sous une bâche dans le camp de Bulengo. Je n\'ai plus rien, mais je garde espoir. »',
+-      author: 'Alphonsine M.',
+-      location: 'Camp de Bulengo, Nord-Kivu',
+-      date: 'Fév. 2025',
+-      avatar: 'user',
+-    },
+-    {
+-      id: 2,
+-      category: 'orphelins',
+-      categoryLabel: 'Orphelin',
+-      text: '« J\'ai 9 ans. Mes parents sont morts quand les hommes armés ont attaqué notre village. Je vis avec ma grande sœur de 14 ans. On mange ce qu\'on trouve. Mon rêve c\'est de retourner à l\'école. »',
+-      author: 'Joël K. (témoignage recueilli)',
+-      location: 'Ituri',
+-      date: 'Mars 2025',
+-      avatar: 'user',
+-    },
+-    {
+-      id: 3,
+-      category: 'veuves',
+-      categoryLabel: 'Veuve',
+-      text: '« Mon mari a été exécuté il y a 8 mois. J\'ai trois enfants à nourrir. J\'ai subi des violences inimaginables. Les organisations d\'aide m\'ont appris à respirer à nouveau. Mais j\'ai besoin de soutien pour reconstruire ma vie. »',
+-      author: 'Espérance N.',
+-      location: 'Minembwe, Sud-Kivu',
+-      date: 'Jan. 2025',
+-      avatar: 'user',
+-    },
+-    {
+-      id: 4,
+-      category: 'victimes',
+-      categoryLabel: 'Victime de violence',
+-      text: '« Une balle perdue m\'a traversé l\'épaule lors d\'une attaque. L\'hôpital de Goma a pu m\'opérer grâce aux fonds collectés ici. Sans cette aide, j\'aurais perdu le bras. Aujourd\'hui je peux de nouveau tenir mon enfant. »',
+-      author: 'Patient B.',
+-      location: 'Hôpital de Goma',
+-      date: 'Déc. 2024',
+-      avatar: 'user',
+-    },
+-    {
+-      id: 5,
+-      category: 'handicapes',
+-      categoryLabel: 'Handicapé',
+-      text: '« J\'ai perdu mes deux jambes sur une mine antipersonnel en 2023. Pendant des mois, j\'ai rampé pour me déplacer. Grâce aux donateurs de HumanitAID, j\'ai reçu un fauteuil roulant. La dignité, ça n\'a pas de prix. »',
+-      author: 'Théodore L.',
+-      location: 'Beni, Nord-Kivu',
+-      date: 'Nov. 2024',
+-      avatar: 'user',
+-    },
+-    {
+-      id: 6,
+-      category: 'orphelins',
+-      categoryLabel: 'Orpheline',
+-      text: '« Je m\'appelle Grâce, j\'ai 12 ans. Depuis que HumanitAID paie ma scolarité, je vais à l\'école chaque matin. C\'est la première fois depuis deux ans que j\'ai quelque chose à attendre chaque jour. Merci de croire en moi. »',
+-      author: 'Grâce M. (famille d\'accueil)',
+-      location: 'Uvira, Sud-Kivu',
+-      date: 'Avr. 2025',
+-      avatar: 'user',
+-    },
+-  ],
+-
+-  news: [
+-    {
+-      id: 1,
+-      title: 'L\'offensive du M23 aggrave la crise humanitaire : 400 000 nouveaux déplacés en 6 semaines dans le Nord-Kivu',
+-      excerpt: 'Les violences du groupe armé M23 et ses alliés ont provoqué une vague massive de déplacements depuis février 2025. Les camps de Bulengo, Lushagala et Kanyabayonga débordent. L\'accès humanitaire est rendu quasi-impossible par les combats actifs. Nos équipes rapportent un état de malnutrition aiguë chez 1 enfant sur 3 dans les camps visités...',
+-      date: '2 avril 2025',
+-      category: 'Rapport terrain',
+-      icon: 'globe',
+-      gradient: 'linear-gradient(135deg, #1a0808 0%, #5c1a1a 50%, #c0392b 100%)',
+-      image: '/assets/images/20240504131607064740_WhatsApp_Image_2024-05-04_at_11.21.37_ce1b9cb1.jpg',
+-      featured: true,
+-    },
+-    {
+-      id: 2,
+-      title: 'Distribution de 320 fauteuils roulants à Goma et Butembo',
+-      date: '18 mars 2025',
+-      icon: 'wheelchair',
+-      image: '/assets/images/570ce394db5b1fb3b18dfe7c46f18002.jpg',
+-    },
+-    {
+-      id: 3,
+-      title: '742 enfants orphelins inscrits dans nos programmes scolaires depuis janvier',
+-      date: '28 fév. 2025',
+-      icon: 'baby',
+-      image: '/assets/images/519f70fb91a51ff99d7c9f5e9c5bc02b.jpg',
+-    },
+-    {
+-      id: 4,
+-      title: 'Centre d\'accueil pour femmes survivantes ouvert à Uvira : 230 bénéficiaires',
+-      date: '12 jan. 2025',
+-      icon: 'dove',
+-      image: '/assets/images/4f5ba90bac342d695ab6dabcfc13fb4e.jpg',
+-    },
+-    {
+-      id: 5,
+-      title: 'Mission médicale : 1 200 consultations réalisées à Minembwe en zone isolée',
+-      date: '5 déc. 2024',
+-      icon: 'medical',
+-      image: '/assets/images/2d739ace910b1c5d33b054bad424da9c.jpg',
+-    },
+-    {
+-      id: 6,
+-      title: 'Soudan : l\'aide humanitaire transite par Port-Soudan, premier port d\'entrée des ONG internationales',
+-      date: '15 avril 2025',
+-      icon: 'radio',
+-      image: '/assets/images/sudan_humanitarian_portsudan_15april2025_3p5a2390_1_1200x800_1.jpg',
+-    },
+-    {
+-      id: 7,
+-      title: 'Conflit au Soudan : les agences de l\'ONU coordonnent la réponse humanitaire depuis Port-Soudan',
+-      date: '15 avril 2025',
+-      icon: 'globe',
+-      image: '/assets/images/sudan_humanitarian_portsudan_15april2025_dsc09987_1_1200x800.jpg.webp',
+-    },
+-  ],
+-
+-  stats: {
+-    displaced: 7200000,
+-    orphans: 2100000,
+-    raised: 847320,
+-    donors: 14280,
+-  },
+-
+-  publications: [
+-    {
+-      id: 1,
+-      title: 'Escalade du conflit à Goma (Nord-Kivu) — ACAPS',
+-      date: '5 février 2025',
+-      icon: 'report',
+-      type: 'Analyse sécuritaire',
+-      image: '/assets/images/8bb278ceb2804b857d55c59872e5505f.jpg',
+-      url: '/assets/reports/ACAPS_Conflict_Escalation_Goma_Fev2025.pdf',
+-    },
+-    {
+-      id: 2,
+-      title: 'Rapport de situation RD Congo — UNFPA, octobre 2025',
+-      date: '31 octobre 2025',
+-      icon: 'clipboard',
+-      type: 'Rapport de situation',
+-      image: '/assets/images/c81b75906ed2b6ce313a87ca80afc419.jpg',
+-      url: '/assets/reports/UNFPA_SitRep_DRC_Octobre2025.pdf',
+-    },
+-    {
+-      id: 3,
+-      title: 'RD Congo — Aperçu des déplacements, UNHCR, mai 2025',
+-      date: '31 mai 2025',
+-      icon: 'map',
+-      type: 'Fiche données',
+-      image: '/assets/images/thumbs_b_c_4a097d84892983f2fc3a7e01a426eb9f.jpg',
+-      url: '/assets/reports/UNHCR_DRC_AtAGlance_Mai2025.pdf',
+-    },
+-    {
+-      id: 4,
+-      title: 'Rapport de situation RD Congo — UNFPA, novembre 2025',
+-      date: '30 novembre 2025',
+-      icon: 'clipboard',
+-      type: 'Rapport de situation',
+-      image: '/assets/images/f368fac771effcea1461751d4cbc3fb4.jpg',
+-      url: '/assets/reports/UNFPA_SitRep_DRC_Novembre2025.pdf',
+-    },
+-  ],
+-
+-  partners: [
+-    'UNICEF',
+-    'CICR',
+-    'MSF',
+-    'OCHA',
+-    'PAM',
+-    'UNHCR',
+-    'IFRC',
+-    'Croix-Rouge',
+-  ],
+-};
+-
+ /* ═══════════════════════════════════════
+    HELPER: Extract array from API response
+    API returns {causes: [...]} or {slides: [...]}
+@@ -380,79 +80,67 @@ function extractArray(data, key) {
+ 
+ async function fetchSlides() {
+   const data = await api.get('/slides');
+-  const arr = extractArray(data, 'slides');
+-  if (arr && arr.length > 0 && arr[0].gradient) return arr;
+-  return DEMO_DATA.slides;
++  return extractArray(data, 'slides') || [];
+ }
+ 
+ async function fetchCauses() {
+   const data = await api.get('/causes');
+-  const arr = extractArray(data, 'causes');
+-  if (arr && arr.length > 0 && arr[0].image) return arr;
+-  return DEMO_DATA.causes;
++  return extractArray(data, 'causes') || [];
+ }
+ 
+ async function fetchTestimonials() {
+   const data = await api.get('/testimonials');
+-  const arr = extractArray(data, 'testimonials');
+-  return (arr && arr.length > 0) ? arr : DEMO_DATA.testimonials;
++  return extractArray(data, 'testimonials') || [];
+ }
+ 
+ async function fetchNews() {
+   const data = await api.get('/news');
+-  const arr = extractArray(data, 'news');
+-  if (arr && arr.length > 0 && arr[0].image) return arr;
+-  return DEMO_DATA.news;
++  return extractArray(data, 'news') || [];
+ }
+ 
+ async function fetchStats() {
+   const data = await api.get('/donations/stats');
+-  if (data && data.total !== undefined) {
+-    return {
+-      displaced: data.displaced || DEMO_DATA.stats.displaced,
+-      orphans: data.orphans || DEMO_DATA.stats.orphans,
+-      raised: data.total || DEMO_DATA.stats.raised,
+-      donors: data.count || DEMO_DATA.stats.donors,
+-    };
+-  }
+-  return DEMO_DATA.stats;
++  if (!data || data.total === undefined) return null;
++  return {
++    displaced: data.displaced,
++    orphans: data.orphans,
++    raised: data.total,
++    donors: data.count,
++  };
+ }
+ 
+ async function fetchPublications() {
+   const data = await api.get('/posts');
+   const arr = extractArray(data, 'posts');
+-  if (arr && arr.length > 0 && arr[0].image) {
+-    return arr.slice(0, 3).map(p => ({
+-      id: p.id,
+-      title: p.title,
+-      date: new Date(p.published_at || p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
+-      icon: 'document',
+-      type: p.category || 'Publication',
+-      image: p.image,
+-      url: p.url || null,
+-    }));
+-  }
+-  return DEMO_DATA.publications;
++  if (!arr) return [];
++  return arr.slice(0, 3).map(p => ({
++    id: p.id,
++    title: p.title,
++    date: new Date(p.published_at || p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }),
++    icon: 'document',
++    type: p.category || 'Publication',
++    image: p.featured_image || p.image || null,
++    url: p.url || null,
++  }));
+ }
+ 
+ async function fetchPartners() {
+   const data = await api.get('/settings');
+-  if (data && data.partners) {
+-    const partners = Array.isArray(data.partners) ? data.partners : [];
+-    return partners.length > 0 ? partners : DEMO_DATA.partners;
+-  }
+-  return DEMO_DATA.partners;
++  if (data && Array.isArray(data.partners)) return data.partners;
++  return [];
+ }
+ 
++// IMPORTANT : ne jamais annoncer un don réussi quand l'appel API a échoué.
++// Un don non confirmé doit toujours être signalé comme un échec au donateur.
+ async function submitDonation(donationData) {
+   const result = await api.post('/donations', donationData);
+   if (!result) {
+-    return { success: true, demo: true, ref: 'HAD-DEMO-' + Math.random().toString(36).substring(2, 8).toUpperCase() };
++    return { success: false, error: 'Impossible de contacter le serveur. Votre don n\'a pas été enregistré, merci de réessayer.' };
+   }
+-  if (result.demo) {
+-    return { ...result, success: true, demo: true, ref: (result.donation && (result.donation.reference || result.donation.id)) || 'HAD-DEMO' };
++  if (result.error) {
++    return { success: false, error: result.error };
+   }
+-  return { ...result, success: true, demo: false, ref: (result.donation && (result.donation.reference || result.donation.id)) || 'HAD-' + Date.now().toString(36).toUpperCase() };
++  return { ...result, success: true, ref: (result.donation && (result.donation.reference || result.donation.id)) || 'HAD-' + Date.now().toString(36).toUpperCase() };
+ }
+ 
+ async function createCheckoutSession(data) {
+@@ -466,19 +154,18 @@ async function createCheckoutSession(data) {
+     if (!res.ok) {
+       return {
+         url: null,
+-        demo: false,
+         error: body.error || 'Le paiement n\'a pas pu être initié. Veuillez réessayer.',
+         status: res.status,
+       };
+     }
+-    return { url: body.url || null, demo: Boolean(body.demo), reference: body.reference || data.reference || '', error: null };
++    return { url: body.url || null, reference: body.reference || data.reference || '', error: null };
+   } catch (_err) {
+-    return { url: null, demo: true, error: null };
++    return { url: null, error: 'Impossible de contacter le serveur de paiement. Vérifiez votre connexion et réessayez.' };
+   }
+ }
+ 
+ async function fetchPublicConfig() {
+   const data = await api.get('/config/public');
+-  if (!data) return { demoMode: true, stripeEnabled: false };
++  if (!data) return { stripeEnabled: false };
+   return data;
+ }
+diff --git a/frontend/js/app.js b/frontend/js/app.js
+index 0bdfcd3..d8362d0 100644
+--- a/frontend/js/app.js
++++ b/frontend/js/app.js
+@@ -117,15 +117,17 @@ function animateCount(el, target, prefix = '') {
+ 
+ async function loadStats() {
+   const stats = await fetchStats();
++  if (!stats) return; // API indisponible : on garde les valeurs déjà présentes dans le HTML plutôt que d'en inventer.
++
+   const displaced = document.getElementById('stat-displaced');
+   const orphans = document.getElementById('stat-orphans');
+   const raised = document.getElementById('stat-raised');
+   const donors = document.getElementById('stat-donors');
+ 
+-  if (displaced) displaced.dataset.count = stats.displaced;
+-  if (orphans) orphans.dataset.count = stats.orphans;
+-  if (raised) { raised.dataset.count = stats.raised; raised.dataset.prefix = '$'; }
+-  if (donors) donors.dataset.count = stats.donors;
++  if (displaced && stats.displaced !== undefined) displaced.dataset.count = stats.displaced;
++  if (orphans && stats.orphans !== undefined) orphans.dataset.count = stats.orphans;
++  if (raised && stats.raised !== undefined) { raised.dataset.count = stats.raised; raised.dataset.prefix = '$'; }
++  if (donors && stats.donors !== undefined) donors.dataset.count = stats.donors;
+ }
+ 
+ /* ── LOAD CAUSES (Progress Bars) ── */
+@@ -453,12 +455,10 @@ function reInitObserver() {
+ }
+ 
+ function registerServiceWorker() {
+-  if ('serviceWorker' in navigator && location.protocol !== 'http:') return;
+-  if ('serviceWorker' in navigator) {
+-    window.addEventListener('load', () => {
+-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+-    });
+-  }
++  if (!('serviceWorker' in navigator)) return;
++  window.addEventListener('load', () => {
++    navigator.serviceWorker.register('/sw.js').catch(() => {});
++  });
+ }
+ 
+ registerServiceWorker();
+diff --git a/frontend/js/donation.js b/frontend/js/donation.js
+index 56dc764..5f0cb65 100644
+--- a/frontend/js/donation.js
++++ b/frontend/js/donation.js
+@@ -163,7 +163,6 @@ const DonationForm = {
+     const method = tab === 'carte' ? (providerName || 'stripe') : tab === 'mobile' ? (providerName || 'flutterwave') : 'wire';
+     const ref = 'HAD-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
+ 
+-    let demo = false;
+     let result = null;
+ 
+     const visiblePanel = tab === 'carte' ? 'card' : tab === 'mobile' ? 'mobile' : 'wire';
+@@ -192,56 +191,56 @@ const DonationForm = {
+       return;
+     }
+ 
++    // En cas d'échec réel (réseau, serveur, paiement), on arrête ici avec un message
++    // clair — on n'affiche jamais la modale de confirmation pour un don non traité.
++    function fail(message) {
++      alert(message || 'Une erreur est survenue. Votre don n\'a pas été enregistré. Merci de réessayer.');
++      if (submitBtn) {
++        submitBtn.disabled = false;
++        submitBtn.textContent = 'Confirmer le don';
++      }
++    }
++
+     if (tab === 'carte') {
++      if (typeof createCheckoutSession !== 'function') {
++        fail('Le paiement par carte est momentanément indisponible.');
++        return;
++      }
+       try {
+-        const session = typeof createCheckoutSession === 'function' ? await createCheckoutSession(donationData) : { url: null, demo: true };
++        const session = await createCheckoutSession(donationData);
+         if (session && session.url) {
+           window.location.href = session.url;
+           return;
+         }
+-        if (session && session.error) {
+-          alert(session.error);
+-          submitBtn.disabled = false;
+-          submitBtn.textContent = 'Confirmer le don';
+-          return;
+-        }
+-        demo = true;
++        fail(session && session.error);
++        return;
+       } catch (err) {
+         console.warn('Checkout failed:', err);
+-        demo = true;
++        fail();
++        return;
+       }
+     } else {
++      if (typeof submitDonation !== 'function') {
++        fail('Ce moyen de paiement est momentanément indisponible.');
++        return;
++      }
+       try {
+-        if (typeof submitDonation === 'function') {
+-          result = await submitDonation(donationData);
+-          demo = !!(result && result.demo);
+-        } else {
+-          demo = true;
++        result = await submitDonation(donationData);
++        if (!result || !result.success) {
++          fail(result && result.error);
++          return;
+         }
+       } catch (err) {
+         console.warn('Donation submit failed:', err);
+-        demo = true;
++        fail();
++        return;
+       }
+     }
+ 
+     document.getElementById('modal-amount').textContent = '$' + amount.toLocaleString();
+     document.getElementById('modal-cause').textContent = causeLabel;
+     const refLine = result && result.ref ? result.ref : ref;
+-    document.getElementById('modal-ref').textContent = 'Référence : ' + refLine + (demo ? '' : ' — En attente de confirmation du paiement.');
+-
+-    const demoLabel = document.querySelector('.modal-demo-label');
+-    if (demo) {
+-      if (!demoLabel) {
+-        const banner = document.querySelector('.modal-cause');
+-        const label = document.createElement('div');
+-        label.className = 'modal-demo-label';
+-        label.style.cssText = 'font-family: var(--font-mono); font-size: var(--text-xs); color: var(--warning, #f39c12); margin-top: 8px;';
+-        label.textContent = 'Mode démo — Don enregistré localement, aucun paiement traité.';
+-        if (banner) banner.parentNode.insertBefore(label, banner.nextSibling);
+-      }
+-    } else if (demoLabel) {
+-      demoLabel.remove();
+-    }
++    document.getElementById('modal-ref').textContent = 'Référence : ' + refLine + ' — En attente de confirmation du paiement.';
+ 
+     if (submitBtn) {
+       submitBtn.disabled = false;
+-- 
+2.43.0
+
