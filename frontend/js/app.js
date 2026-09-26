@@ -236,7 +236,7 @@ async function loadCausesGrid() {
       : '';
 
     grid.innerHTML += `
-      <article class="cause-card${i === 0 ? ' cause-card--featured' : ''}">
+      <article class="cause-card${i === 0 ? ' cause-card--featured' : ''}" data-cause="${escHtml(cause.slug)}">
         <div class="cause-media">
           ${media}
           <span class="cause-index">${String(i + 1).padStart(2, '0')}</span>
