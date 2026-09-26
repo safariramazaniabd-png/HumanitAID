@@ -44,6 +44,11 @@ const I18N = {
       'nav.actualites': 'Actualités',
       'nav.donner': 'Faire un don',
 
+      'pwa.install.title': 'Installer HumanitAID',
+      'pwa.install.text': "Ajoutez l'app à votre écran d'accueil pour un accès rapide, même avec une connexion limitée.",
+      'pwa.install.btn': 'Installer',
+      'pwa.install.dismiss': 'Plus tard',
+
       'menu.label': 'Menu',
       'menu.close': 'Fermer le menu',
       'menu.title': 'Menu mobile',
@@ -290,6 +295,11 @@ const I18N = {
       'nav.actualites': 'News',
       'nav.donner': 'Donate',
 
+      'pwa.install.title': 'Install HumanitAID',
+      'pwa.install.text': 'Add the app to your home screen for quick access, even on a limited connection.',
+      'pwa.install.btn': 'Install',
+      'pwa.install.dismiss': 'Later',
+
       'menu.label': 'Menu',
       'menu.close': 'Close menu',
       'menu.title': 'Mobile menu',
@@ -535,6 +545,11 @@ const I18N = {
       'nav.temoignages': 'Testimonios',
       'nav.actualites': 'Noticias',
       'nav.donner': 'Donar',
+
+      'pwa.install.title': 'Instalar HumanitAID',
+      'pwa.install.text': 'Añade la app a tu pantalla de inicio para un acceso rápido, incluso con conexión limitada.',
+      'pwa.install.btn': 'Instalar',
+      'pwa.install.dismiss': 'Más tarde',
 
       'menu.label': 'Menú',
       'menu.close': 'Cerrar menú',

@@ -745,3 +745,80 @@
   background: #fff;
   box-shadow: -4px 0 20px rgba(0,0,0,0.1);
 }
+
+/* ── PWA INSTALL BANNER ── */
+
+.pwa-install-banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  max-width: 420px;
+  margin: 0 auto;
+  z-index: 998;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+  pointer-events: none;
+}
+
+.pwa-install-banner.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.pwa-install-icon img {
+  display: block;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.pwa-install-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pwa-install-body strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.pwa-install-body p {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.pwa-install-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pwa-install-actions .btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .pwa-install-banner {
+    flex-wrap: wrap;
+  }
+  .pwa-install-actions {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

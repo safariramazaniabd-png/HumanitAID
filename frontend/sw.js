@@ -1,4 +1,4 @@
-const CACHE_NAME = 'humanitaid-v6';
+const CACHE_NAME = 'humanitaid-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -15,6 +15,7 @@ const STATIC_ASSETS = [
   '/js/icons.js',
   '/js/carousel.js',
   '/js/donation.js',
+  '/js/pwa-install.js',
   '/manifest.webmanifest',
   '/assets/icons/favicon.svg',
   '/assets/icons/icon-192.png',
