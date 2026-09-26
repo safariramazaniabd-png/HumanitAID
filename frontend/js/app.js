@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   ThemeManager.init();
   DonationForm.init();
   initHamburger();
+  bindMobileCausesSubmenu();
   initSmoothScroll();
   initFooterYear();
 
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadStats();
   loadCauses();
   loadCausesGrid();
+  populateMobileCausesSubmenu();
   loadStoriesCarousel();
   loadPublications();
   loadTestimonials();
@@ -52,6 +54,16 @@ function initHamburger() {
   const mobileClose = document.querySelector('.mobile-close');
   if (!hamburger || !mobileMenu) return;
 
+  const causesToggle = document.getElementById('mobile-causes-toggle');
+  const causesSubmenu = document.getElementById('mobile-causes-submenu');
+  if (causesToggle && causesSubmenu) {
+    causesToggle.addEventListener('click', () => {
+      const expanded = causesToggle.getAttribute('aria-expanded') === 'true';
+      causesToggle.setAttribute('aria-expanded', String(!expanded));
+      causesSubmenu.hidden = expanded;
+    });
+  }
+
   const focusables = () => Array.from(mobileMenu.querySelectorAll('a, button:not([disabled])'));
 
   function openMenu() {
@@ -86,8 +98,12 @@ function initHamburger() {
   if (mobileOverlay) mobileOverlay.addEventListener('click', closeMenu);
   if (mobileClose) mobileClose.addEventListener('click', closeMenu);
 
-  mobileMenu.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', closeMenu);
+  // Délégation (pas mobileMenu.querySelectorAll('a').forEach) : couvre aussi
+  // les liens injectés dynamiquement après ce binding initial (ex: le
+  // sous-menu "Nos causes", peuplé plus tard depuis /api/causes).
+  mobileMenu.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link) closeMenu();
   });
 
   document.addEventListener('keydown', (e) => {
@@ -253,6 +269,51 @@ async function loadCausesGrid() {
   });
 
   reInitObserver();
+}
+
+/* ── SOUS-MENU MOBILE "NOS CAUSES" ──
+   Peuplé depuis les mêmes données que loadCausesGrid() (getCauses(),
+   déjà mises en cache) plutôt que codées en dur : les titres restent
+   corrects même si un admin les modifie via le CMS. */
+async function populateMobileCausesSubmenu() {
+  const submenu = document.getElementById('mobile-causes-submenu');
+  if (!submenu) return;
+
+  const causes = await getCauses();
+  const allLink = submenu.querySelector('.mobile-submenu-all');
+
+  causes.forEach((cause) => {
+    if (!cause.slug) return;
+    const a = document.createElement('a');
+    a.href = '#donner';
+    a.dataset.cause = cause.slug;
+    a.textContent = cause.title;
+    submenu.appendChild(a);
+  });
+
+  // Repositionner "Voir toutes les causes" en dernier, après les 5 vraies causes.
+  if (allLink) submenu.appendChild(allLink);
+}
+
+// Réutilise le même mécanisme de propagation que les cartes de causes
+// (voir DonationForm.bindCauseCards dans donation.js), pour le sous-menu
+// mobile : cliquer une cause pré-sélectionne le bon slug dans #causeSelect
+// avant que le lien #donner ne fasse défiler la page.
+function bindMobileCausesSubmenu() {
+  const submenu = document.getElementById('mobile-causes-submenu');
+  if (!submenu) return;
+  submenu.addEventListener('click', (e) => {
+    const link = e.target.closest('a[data-cause]');
+    if (!link) return;
+    const slug = link.dataset.cause;
+    const select = document.getElementById('causeSelect');
+    if (!select) return;
+    const hasOption = Array.from(select.options).some((opt) => opt.value === slug);
+    if (hasOption) {
+      select.value = slug;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
 }
 
 /* ── LOAD STORIES CAROUSEL ── */

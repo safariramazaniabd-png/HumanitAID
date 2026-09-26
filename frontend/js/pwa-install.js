@@ -86,9 +86,39 @@
     buildBanner();
   }
 
+  // Contrôle dans le menu mobile (#mobile-pwa-group) : contrairement au
+  // bandeau flottant, pas de délai/scroll — il reste simplement disponible
+  // dès que l'installation est possible, pour qui va le chercher dans le
+  // menu plutôt que d'attendre une proposition automatique.
+  let menuControlWired = false;
+  function revealMenuInstallControl() {
+    if (isAlreadyInstalled()) return;
+    const group = document.getElementById('mobile-pwa-group');
+    const btn = document.getElementById('mobile-install-btn');
+    if (!group || !btn) return;
+    group.hidden = false;
+    if (menuControlWired) return;
+    menuControlWired = true;
+    btn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      btn.disabled = true;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      btn.disabled = false;
+      group.hidden = true;
+    });
+  }
+
+  function hideMenuInstallControl() {
+    const group = document.getElementById('mobile-pwa-group');
+    if (group) group.hidden = true;
+  }
+
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    revealMenuInstallControl();
 
     // Déclenchement après une activité minimale (scroll), pas au chargement :
     // on laisse la personne découvrir le site avant de lui proposer l'app.
@@ -108,6 +138,7 @@
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     localStorage.removeItem(DISMISS_KEY);
+    hideMenuInstallControl();
     const existing = document.querySelector('.pwa-install-banner');
     if (existing) removeBanner(existing);
   });
