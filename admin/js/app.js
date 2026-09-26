@@ -14,7 +14,6 @@ const App = {
     ? `${window.location.protocol}//${window.location.hostname}:3000/api`
     : `${window.location.origin}/api`,
   DEMO_MODE: false,
-  TOKEN_KEY: 'humanitaid_admin_token',
   THEME_KEY: 'humanitaid_admin_theme',
 
   pages: {},
@@ -29,16 +28,13 @@ const App = {
   },
 
   // Auth
+  // Le token vit dans un cookie httpOnly (invisible en JS) : on ne peut
+  // pas savoir localement si la session existe, il faut interroger /auth/me.
   async checkAuth() {
-    const token = localStorage.getItem(this.TOKEN_KEY);
-    if (!token) {
-      this.showLogin();
-      return;
-    }
-
     try {
       const res = await fetch(`${this.API_BASE}/auth/me`, {
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       if (res.ok) {
         const data = await res.json();
@@ -47,10 +43,10 @@ const App = {
         }
         this.showAdmin();
       } else {
-        this.logout();
+        this.showLogin();
       }
     } catch (err) {
-      this.showAdmin();
+      this.showLogin();
     }
   },
 
@@ -81,16 +77,16 @@ const App = {
     try {
       const res = await fetch(`${this.API_BASE}/auth/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
 
-      if (res.ok && data.token) {
-        localStorage.setItem(this.TOKEN_KEY, data.token);
-        if (data.user) {
-          localStorage.setItem('humanitaid_admin_user', JSON.stringify(data.user));
-        }
+      if (res.ok && data.user) {
+        // Le token est dans un cookie httpOnly posé par le serveur ; on ne
+        // le voit jamais ici, on garde juste le profil pour l'affichage UI.
+        localStorage.setItem('humanitaid_admin_user', JSON.stringify(data.user));
         errorEl.hidden = true;
         this.showAdmin();
       } else {
@@ -112,21 +108,26 @@ const App = {
     this.navigateFromHash();
   },
 
-  logout() {
-    localStorage.removeItem(this.TOKEN_KEY);
+  async logout() {
+    try {
+      // Un cookie httpOnly ne peut pas être effacé par du JS : il faut
+      // demander au serveur de le faire via Set-Cookie Max-Age=0.
+      await fetch(`${this.API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch (_err) {
+      // On efface quand même côté client même si l'appel réseau échoue.
+    }
+    localStorage.removeItem('humanitaid_admin_user');
     location.hash = '';
     location.reload();
   },
 
   // API Client
   async api(path, opts = {}) {
-    const token = localStorage.getItem(this.TOKEN_KEY);
     const url = `${this.API_BASE}${path}`;
     const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     try {
-      const res = await fetch(url, { headers, ...opts });
+      const res = await fetch(url, { credentials: 'include', headers, ...opts });
       if (res.status === 401) { this.logout(); return null; }
       return await res.json();
     } catch (err) {

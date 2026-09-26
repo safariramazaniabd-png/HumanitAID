@@ -6,6 +6,10 @@
      - redact()         : masque les clés Stripe dans les logs/messages
      - buildPgOptions() : options de connexion pg (SSL selon l'URL)
      - resolveReturnOrigin(req) : anti open-redirect pour les URLs de retour
+     - Authentification admin (cookie httpOnly + JWT) :
+         signAdminToken(user), verifyAdminToken(token),
+         parseCookies(req), setAuthCookie(res, token),
+         clearAuthCookie(res), requireAdmin(req, res)
    ═══════════════════════════════════════════════════════════ */
 
 const REDACT = /sk_(test|live)_[A-Za-z0-9]+/gi;
@@ -56,4 +60,144 @@ function resolveReturnOrigin(req) {
   return DEFAULT_SITE;
 }
 
-module.exports = { REDACT, redact, buildPgOptions, DEFAULT_SITE, resolveReturnOrigin };
+/* ───────────────────────────────────────────────────────────
+   Authentification admin
+   ─────────────────────────────────────────────────────────── */
+
+const AUTH_COOKIE_NAME = 'humanitaid_admin_session';
+
+// Convertit un délai type "7d" / "12h" / "30m" / "45s" en secondes.
+// Retombe sur 7 jours si le format n'est pas reconnu.
+function expiresInToSeconds(value) {
+  const raw = String(value || '7d').trim();
+  const match = raw.match(/^(\d+)\s*([dhms])$/i);
+  if (!match) return 7 * 24 * 3600;
+  const n = parseInt(match[1], 10);
+  const unit = match[2].toLowerCase();
+  const factor = { s: 1, m: 60, h: 3600, d: 86400 }[unit];
+  return n * factor;
+}
+
+function signAdminToken(user) {
+  const jwt = require('jsonwebtoken');
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET manquant');
+  return jwt.sign(
+    { id: user.id, email: user.email, role: user.role, name: user.name },
+    secret,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+}
+
+function verifyAdminToken(token) {
+  const jwt = require('jsonwebtoken');
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET manquant');
+  return jwt.verify(token, secret); // lève une exception si invalide/expiré
+}
+
+// Parseur de cookies minimal (pas de dépendance externe requise).
+function parseCookies(req) {
+  const header = (req.headers && req.headers.cookie) || '';
+  const out = {};
+  header.split(';').forEach((pair) => {
+    const idx = pair.indexOf('=');
+    if (idx === -1) return;
+    const key = pair.slice(0, idx).trim();
+    if (!key) return;
+    out[key] = decodeURIComponent(pair.slice(idx + 1).trim());
+  });
+  return out;
+}
+
+function setAuthCookie(res, token) {
+  const maxAge = expiresInToSeconds(process.env.JWT_EXPIRES_IN);
+  const parts = [
+    `${AUTH_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    'HttpOnly',
+    'Secure',
+    'SameSite=Strict',
+    'Path=/',
+    `Max-Age=${maxAge}`,
+  ];
+  res.setHeader('Set-Cookie', parts.join('; '));
+}
+
+function clearAuthCookie(res) {
+  const parts = [
+    `${AUTH_COOKIE_NAME}=`,
+    'HttpOnly',
+    'Secure',
+    'SameSite=Strict',
+    'Path=/',
+    'Max-Age=0',
+  ];
+  res.setHeader('Set-Cookie', parts.join('; '));
+}
+
+// À appeler en tête de handler pour les routes d'écriture admin :
+//   const admin = requireAdmin(req, res);
+//   if (!admin) return; // la réponse 401/403 a déjà été envoyée
+function requireAdmin(req, res) {
+  const cookies = parseCookies(req);
+  const token = cookies[AUTH_COOKIE_NAME];
+  if (!token) {
+    res.status(401).json({ error: 'Authentification requise' });
+    return null;
+  }
+  try {
+    const payload = verifyAdminToken(token);
+    const allowedRoles = ['super_admin', 'admin', 'editor'];
+    if (!allowedRoles.includes(payload.role)) {
+      res.status(403).json({ error: 'Accès refusé' });
+      return null;
+    }
+    return payload;
+  } catch (_err) {
+    res.status(401).json({ error: 'Session expirée, veuillez vous reconnecter' });
+    return null;
+  }
+}
+
+/* ───────────────────────────────────────────────────────────
+   Rate limiting best-effort pour /api/auth/login
+   ⚠️ En serverless, cet état est en mémoire par instance et est
+   perdu à chaque cold start / réparti entre régions : c'est une
+   protection best-effort, PAS une garantie anti-bruteforce
+   robuste. Pour une protection réellement fiable en production,
+   utiliser Vercel Attack Challenge Mode (WAF) ou un verrou
+   persisté en base (colonne failed_attempts sur `users`) — à
+   évaluer comme chantier séparé si le besoin est confirmé.
+   ─────────────────────────────────────────────────────────── */
+const loginAttempts = new Map(); // ip -> [timestamps]
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = process.env.NODE_ENV === 'production' ? 20 : 100;
+
+function checkLoginRateLimit(req) {
+  const ip =
+    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+    req.socket?.remoteAddress ||
+    'unknown';
+  const now = Date.now();
+  const attempts = (loginAttempts.get(ip) || []).filter((t) => now - t < LOGIN_WINDOW_MS);
+  if (attempts.length >= LOGIN_MAX_ATTEMPTS) return false;
+  attempts.push(now);
+  loginAttempts.set(ip, attempts);
+  return true;
+}
+
+module.exports = {
+  REDACT,
+  redact,
+  buildPgOptions,
+  DEFAULT_SITE,
+  resolveReturnOrigin,
+  AUTH_COOKIE_NAME,
+  signAdminToken,
+  verifyAdminToken,
+  parseCookies,
+  setAuthCookie,
+  clearAuthCookie,
+  requireAdmin,
+  checkLoginRateLimit,
+};
