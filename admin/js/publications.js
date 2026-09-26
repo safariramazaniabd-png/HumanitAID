@@ -246,7 +246,7 @@
     document.getElementById('publish-btn').addEventListener('click', () => savePub(container, document.getElementById('pub-status').value));
   }
 
-  function savePub(container, status) {
+  async function savePub(container, status) {
     const dateVal = document.getElementById('pub-date').value;
     const data = {
       title: document.getElementById('pub-title').value,
