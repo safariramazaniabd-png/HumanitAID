@@ -135,10 +135,18 @@ function clearAuthCookie(res) {
   res.setHeader('Set-Cookie', parts.join('; '));
 }
 
+// Miroir de backend/middleware/rbac.js (ROLE_HIERARCHY). Dupliqué ici
+// volontairement : shared/constants.js n'est PAS inclus dans le build
+// Vercel (Root Directory = frontend), donc frontend/api/ ne peut pas
+// le require — voir le même choix déjà fait dans donations/checkout.js
+// pour CAUSE_SLUGS.
+const ROLE_HIERARCHY = { viewer: 0, finance: 1, editor: 2, admin: 3, super_admin: 4 };
+
 // À appeler en tête de handler pour les routes d'écriture admin :
-//   const admin = requireAdmin(req, res);
+//   const admin = requireAdmin(req, res);              // rôle mini: editor
+//   const admin = requireAdmin(req, res, 'admin');      // rôle mini: admin
 //   if (!admin) return; // la réponse 401/403 a déjà été envoyée
-function requireAdmin(req, res) {
+function requireAdmin(req, res, minRole = 'editor') {
   const cookies = parseCookies(req);
   const token = cookies[AUTH_COOKIE_NAME];
   if (!token) {
@@ -147,9 +155,10 @@ function requireAdmin(req, res) {
   }
   try {
     const payload = verifyAdminToken(token);
-    const allowedRoles = ['super_admin', 'admin', 'editor'];
-    if (!allowedRoles.includes(payload.role)) {
-      res.status(403).json({ error: 'Accès refusé' });
+    const userLevel = ROLE_HIERARCHY[payload.role] ?? -1;
+    const minLevel = ROLE_HIERARCHY[minRole] ?? 0;
+    if (userLevel < minLevel) {
+      res.status(403).json({ error: 'Accès interdit — rôle insuffisant' });
       return null;
     }
     return payload;
@@ -186,6 +195,25 @@ function checkLoginRateLimit(req) {
   return true;
 }
 
+// Variante non bloquante de requireAdmin : à utiliser sur une route GET
+// publique qui doit néanmoins montrer plus de contenu à un admin connecté
+// (ex: GET /api/posts renvoie tous les statuts pour l'admin, seulement
+// "published" pour le public). N'écrit JAMAIS de réponse d'erreur :
+// retourne simplement null si pas de session valide.
+function getOptionalAdmin(req, minRole = 'editor') {
+  const cookies = parseCookies(req);
+  const token = cookies[AUTH_COOKIE_NAME];
+  if (!token) return null;
+  try {
+    const payload = verifyAdminToken(token);
+    const userLevel = ROLE_HIERARCHY[payload.role] ?? -1;
+    const minLevel = ROLE_HIERARCHY[minRole] ?? 0;
+    return userLevel >= minLevel ? payload : null;
+  } catch (_err) {
+    return null;
+  }
+}
+
 module.exports = {
   REDACT,
   redact,
@@ -199,5 +227,6 @@ module.exports = {
   setAuthCookie,
   clearAuthCookie,
   requireAdmin,
+  getOptionalAdmin,
   checkLoginRateLimit,
 };
