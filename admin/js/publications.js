@@ -90,7 +90,7 @@
               return `
               <tr>
                 <td><strong>${escHtml(p.title)}</strong>${p.is_featured ? ' ⭐' : ''}</td>
-                <td>${p.cause_title ? causeLabel(p.cause_id) : '<span class="text-muted">—</span>'}</td>
+                <td>${p.cause_id ? causeLabel(p.cause_id) : '<span class="text-muted">—</span>'}</td>
                 <td>${p.category ? `<span class="badge badge-info">${escHtml(p.category)}</span>` : ''}</td>
                 <td>${App.statusBadge(p.status)}</td>
                 <td>${App.formatDate(p.published_at || p.created_at)}</td>
