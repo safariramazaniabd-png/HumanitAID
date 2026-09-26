@@ -120,7 +120,7 @@ router.get('/:id', async (req, res) => {
     console.error('[Posts] Get error:', err);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
-};
+});
 
 router.post('/', auth, requireMinRole(ROLES.EDITOR), validationMiddleware(validatePost), async (req, res) => {
   if (env.demoMode) {
