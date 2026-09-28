@@ -36,7 +36,7 @@ module.exports = async function slides(req, res) {
       const activeClause = admin ? '' : 'AND is_active = true';
       const { rows } = await pool.query(
         `SELECT ${columns} FROM slides
-          WHERE ($1::text IS NULL OR type = $1) ${activeClause}
+          WHERE ($1::slide_type IS NULL OR type = $1::slide_type) ${activeClause}
           ORDER BY display_order ASC, created_at ASC`,
         [type || null]
       );
