@@ -4,7 +4,7 @@
   "private": true,
   "description": "HumanitAID Frontend — site statique + fonctions serverless Vercel",
   "scripts": {
-    "build": "node -e \"console.log('Build OK — static frontend, no compilation needed')\""
+    "build": "node -e \"const fs=require('fs'); fs.rmSync('admin',{recursive:true,force:true}); fs.cpSync('../admin','admin',{recursive:true}); console.log('Build OK — frontend + admin statiques préparés pour Vercel')\""
   },
   "engines": {
     "node": ">=18.0.0"
