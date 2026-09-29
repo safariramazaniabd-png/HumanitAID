@@ -195,6 +195,55 @@ function validateCauseUpdate(body) {
   return errors;
 }
 
+const REPORT_SOURCES = ['OCHA', 'UNHCR', 'UNICEF', 'ICRC', 'WHO', 'WFP', 'IOM', 'HumanitAID'];
+
+// Miroir exact des contraintes SQL de database/migrations/003_reports.sql
+// (reports_source_name_check, reports_source_url_required) : donne un
+// message d'erreur clair côté client avant même d'atteindre la base,
+// qui reste le dernier rempart (defense in depth).
+function validateReport(body, { partial = false } = {}) {
+  const errors = [];
+  const { title, slug, summary, source_name, source_url, published_date, status, cause_ids } = body;
+
+  if (!partial || title !== undefined) {
+    if (!title || sanitize(title).length < 5) errors.push('Titre requis (min 5 caractères)');
+  }
+  if (slug !== undefined && slug !== null && slug !== '') {
+    if (!SLUG_REGEX.test(slug)) errors.push('Format de slug invalide (minuscules, chiffres, tirets uniquement)');
+  }
+  if (summary !== undefined && summary !== null && sanitize(summary).length > MAX_SUMMARY) {
+    errors.push(`Résumé trop long (max ${MAX_SUMMARY} caractères)`);
+  }
+
+  if (!partial || source_name !== undefined) {
+    if (!REPORT_SOURCES.includes(source_name)) {
+      errors.push(`source_name doit être l'une de : ${REPORT_SOURCES.join(', ')}`);
+    } else if (source_name !== 'HumanitAID' && (!source_url || !isValidUrl(source_url))) {
+      errors.push('source_url est obligatoire et doit être une URL valide pour toute source externe');
+    }
+  }
+  if (source_url !== undefined && source_url !== null && source_url !== '' && !isValidUrl(source_url)) {
+    errors.push('source_url doit être une URL valide');
+  }
+
+  if (published_date !== undefined && published_date !== null && published_date !== '') {
+    if (isNaN(Date.parse(published_date))) errors.push('published_date invalide');
+  }
+
+  const allowedStatuses = ['draft', 'published', 'archived'];
+  if (status !== undefined && !allowedStatuses.includes(status)) {
+    errors.push(`Statut invalide (doit être l'un de : ${allowedStatuses.join(', ')})`);
+  }
+
+  if (cause_ids !== undefined) {
+    if (!Array.isArray(cause_ids) || !cause_ids.every(isValidUUID)) {
+      errors.push('cause_ids doit être un tableau d\'UUID valides');
+    }
+  }
+
+  return errors;
+}
+
 module.exports = {
   sanitize,
   isValidUrl,
@@ -204,4 +253,6 @@ module.exports = {
   validateTestimonial,
   validateSlide,
   validateCauseUpdate,
+  validateReport,
+  REPORT_SOURCES,
 };

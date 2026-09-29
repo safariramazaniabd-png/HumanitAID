@@ -43,6 +43,13 @@ const ALLOWED_COLUMNS = {
     // tous les liens déjà partagés/indexés et la propagation carte→formulaire
     // (frontend/js/donation.js s'appuie sur ces 5 slugs fixes).
   ],
+  reports: [
+    'title', 'slug', 'summary', 'content', 'featured_image',
+    'source_name', 'source_url', 'published_date', 'status',
+    // cause_ids n'est PAS une colonne de `reports` (table de jointure
+    // report_causes) : géré séparément dans les handlers, jamais via
+    // buildInsertQuery/buildUpdateQuery.
+  ],
 };
 
 // UPDATE <table> SET col=$1, ... WHERE id=$n RETURNING *
