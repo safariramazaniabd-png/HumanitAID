@@ -28,26 +28,10 @@ const App = {
   },
 
   // Auth
-  // Le token vit dans un cookie httpOnly (invisible en JS) : on ne peut
-  // pas savoir localement si la session existe, il faut interroger /auth/me.
+  // Au chargement de /admin/, l'écran de connexion est toujours présenté.
+  // La session httpOnly est ensuite établie ou renouvelée par /auth/login.
   async checkAuth() {
-    try {
-      const res = await fetch(`${this.API_BASE}/auth/me`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
-          localStorage.setItem('humanitaid_admin_user', JSON.stringify(data.user));
-        }
-        this.showAdmin();
-      } else {
-        this.showLogin();
-      }
-    } catch (err) {
-      this.showLogin();
-    }
+    this.showLogin();
   },
 
   showLogin() {
