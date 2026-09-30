@@ -132,7 +132,7 @@ const App = {
     if (loginPassword) loginPassword.value = '';
 
     location.hash = '';
-    location.reload();
+    this.showLogin();
   },
 
   // API Client
