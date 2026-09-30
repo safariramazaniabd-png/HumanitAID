@@ -19,5 +19,8 @@
     "node": ">=18.0.0"
   },
   "author": "HumanitAID Foundation",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "supabase": "^2.118.0"
+  }
 }

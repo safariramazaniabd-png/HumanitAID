@@ -50,3 +50,6 @@ coverage/
 
 # Admin généré pendant le build Vercel
 frontend/admin/
+
+# Supabase CLI temporary files
+supabase/.temp/
