@@ -115,9 +115,13 @@ const I18N = {
       'carousel.dot': 'Diapositive {n}',
 
       'publications.label': 'Publications',
-      'publications.title': 'Rapports & <em>Analyses</em>',
+      'publications.title': 'Nos <em>Publications</em>',
       'publications.sub': 'Documents de référence pour comprendre et agir.',
       'pub.download': 'Télécharger : {title}',
+
+      'rapports.label': 'Rapports',
+      'rapports.title': 'Constats <em>vérifiés</em>',
+      'rapports.sub': 'Chaque chiffre cite sa source — organisation internationale ou terrain HumanitAID.',
 
       'temoignages.label': 'Voix du terrain',
       'temoignages.title': 'Ils se <em>relèvent</em>.<br>Ils témoignent.',
@@ -372,9 +376,13 @@ const I18N = {
       'carousel.dot': 'Slide {n}',
 
       'publications.label': 'Publications',
-      'publications.title': 'Reports & <em>Analysis</em>',
+      'publications.title': 'Our <em>Publications</em>',
       'publications.sub': 'Reference documents to understand and act.',
       'pub.download': 'Download: {title}',
+
+      'rapports.label': 'Reports',
+      'rapports.title': 'Verified <em>findings</em>',
+      'rapports.sub': 'Every figure cites its source — an international organization or HumanitAID field data.',
 
       'temoignages.label': 'Voices from the field',
       'temoignages.title': 'They <em>rise again.</em><br>They testify.',
@@ -629,9 +637,13 @@ const I18N = {
       'carousel.dot': 'Diapositiva {n}',
 
       'publications.label': 'Publicaciones',
-      'publications.title': 'Informes y <em>análisis</em>',
+      'publications.title': 'Nuestras <em>Publicaciones</em>',
       'publications.sub': 'Documentos de referencia para comprender y actuar.',
       'pub.download': 'Descargar: {title}',
+
+      'rapports.label': 'Informes',
+      'rapports.title': 'Datos <em>verificados</em>',
+      'rapports.sub': 'Cada cifra cita su fuente — organización internacional o terreno HumanitAID.',
 
       'temoignages.label': 'Voces del terreno',
       'temoignages.title': 'Ellos <em>renacen.</em><br>Dan testimonio.',

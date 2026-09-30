@@ -215,6 +215,24 @@ async function fetchPublications() {
   }));
 }
 
+// Distinct de fetchPublications (posts) : les rapports citent une source
+// (OCHA/UNHCR/UNICEF/ICRC/WHO/WFP/IOM ou HumanitAID), affichée publiquement
+// pour que la personne puisse vérifier l'origine du chiffre/du constat.
+async function fetchReports() {
+  const data = await api.get('/reports');
+  const arr = extractArray(data, 'reports');
+  if (!arr) return [];
+  return arr.map((r) => ({
+    id: r.id,
+    title: r.title,
+    date: formatDateFr(r.published_date || r.created_at),
+    icon: 'document',
+    source: r.source_name,
+    image: r.featured_image || null,
+    url: r.source_name === 'HumanitAID' ? null : r.source_url,
+  }));
+}
+
 async function fetchFieldStories() {
   const data = await api.get('/posts');
   const arr = extractArray(data, 'posts');

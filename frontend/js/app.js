@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   populateMobileCausesSubmenu();
   loadStoriesCarousel();
   loadPublications();
+  loadReportsFeed();
   loadTestimonials();
   loadNews();
   loadPartners();
@@ -379,7 +380,34 @@ async function loadPublications() {
   });
 }
 
-/* ── LOAD TESTIMONIALS ── */
+/* ── LOAD REPORTS (source vérifiée) ── */
+
+async function loadReportsFeed() {
+  const reports = await fetchReports();
+  const feed = document.getElementById('reports-feed');
+  if (!feed) return;
+  if (!reports.length) return;
+
+  feed.innerHTML = '';
+  reports.forEach((r) => {
+    const sourceLabel = r.source === 'HumanitAID' ? 'HumanitAID — terrain' : r.source;
+    const download = r.url
+      ? `<a class="pub-download" href="${escHtml(r.url)}" target="_blank" rel="noopener" aria-label="Voir la source : ${escHtml(r.title)}">${humanIcon('report')}</a>`
+      : '';
+    feed.innerHTML += `
+      <a class="pub-item fade-up" ${r.url ? `href="${escHtml(r.url)}" target="_blank" rel="noopener"` : ''}>
+        <div class="pub-icon">${r.image ? `<img src="${r.image}" alt="" loading="lazy">` : humanIcon(r.icon || 'document')}</div>
+        <div class="pub-body">
+          <span class="pub-type">${escHtml(sourceLabel)}</span>
+          <h4 class="pub-title">${escHtml(r.title)}</h4>
+          <p class="pub-date">${escHtml(r.date)}</p>
+        </div>
+        ${download}
+      </a>
+    `;
+  });
+}
+
 
 async function loadTestimonials() {
   const data = await fetchTestimonials();
