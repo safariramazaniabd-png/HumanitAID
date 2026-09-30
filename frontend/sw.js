@@ -1,4 +1,4 @@
-const CACHE_NAME = 'humanitaid-v8';
+const CACHE_NAME = 'humanitaid-v9';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -40,25 +40,44 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first for API calls
-  if (event.request.url.includes('/api/')) {
+  const request = event.request;
+  const isApiRequest = request.url.includes('/api/');
+  const isGetRequest = request.method === 'GET';
+
+  // API mutations must always go to the network.
+  // Cache Storage only supports GET requests.
+  if (isApiRequest && !isGetRequest) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Network-first for API GET requests.
+  if (isApiRequest) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(request).catch(() => caches.match(request))
     );
     return;
   }
 
-  // Cache-first for static assets
+  // Never cache non-GET requests.
+  if (!isGetRequest) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Cache-first for GET/static assets.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+    caches.match(request).then((cached) => {
+      return cached || fetch(request).then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
         return response;
       });
     }).catch(() => {
       // Offline fallback
-      if (event.request.destination === 'document') {
+      if (request.destination === 'document') {
         return caches.match('/index.html');
       }
     })
