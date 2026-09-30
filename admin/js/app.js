@@ -51,12 +51,20 @@ const App = {
   },
 
   showLogin() {
-    document.getElementById('login-screen').hidden = false;
-    document.getElementById('admin-shell').hidden = true;
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.login();
-    });
+    const loginScreen = document.getElementById('login-screen');
+    const adminShell = document.getElementById('admin-shell');
+    const loginForm = document.getElementById('login-form');
+
+    loginScreen.hidden = false;
+    adminShell.hidden = true;
+
+    if (!loginForm.dataset.bound) {
+      loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.login();
+      });
+      loginForm.dataset.bound = 'true';
+    }
   },
 
   async login() {
