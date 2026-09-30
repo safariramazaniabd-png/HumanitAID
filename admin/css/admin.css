@@ -59,6 +59,10 @@ body {
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: var(--accent-hover); }
 
+[hidden] {
+  display: none !important;
+}
+
 /* =========================================
    Login Screen
    ========================================= */
