@@ -125,6 +125,12 @@ const App = {
       // On efface quand même côté client même si l'appel réseau échoue.
     }
     localStorage.removeItem('humanitaid_admin_user');
+
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    if (loginEmail) loginEmail.value = '';
+    if (loginPassword) loginPassword.value = '';
+
     location.hash = '';
     location.reload();
   },
