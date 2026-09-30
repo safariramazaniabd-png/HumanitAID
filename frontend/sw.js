@@ -42,7 +42,15 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   const isApiRequest = request.url.includes('/api/');
+  const isAdminRequest = new URL(request.url).pathname.startsWith('/admin');
   const isGetRequest = request.method === 'GET';
+
+  // The admin back-office must never be served from the PWA cache.
+  // This prevents stale HTML/CSS/JS from overriding the current admin version.
+  if (isAdminRequest) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // API mutations must always go to the network.
   // Cache Storage only supports GET requests.
