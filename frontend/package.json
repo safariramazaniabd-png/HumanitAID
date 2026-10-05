@@ -4,7 +4,7 @@
   "private": true,
   "description": "HumanitAID Frontend — site statique + fonctions serverless Vercel",
   "scripts": {
-    "build": "node -e \"const fs=require('fs'); fs.rmSync('admin',{recursive:true,force:true}); fs.cpSync('../admin','admin',{recursive:true}); console.log('Build OK — frontend + admin statiques préparés pour Vercel')\""
+    "build": "node -e \"const fs=require(\\\"fs\\\"); fs.rmSync(\\\"dist\\\",{recursive:true,force:true}); fs.mkdirSync(\\\"dist\\\",{recursive:true}); for(const n of fs.readdirSync(\\\".\\\")){if([\\\"dist\\\",\\\"node_modules\\\",\\\".vercel\\\",\\\".env.local\\\",\\\".env.production\\\"].indexOf(n)===-1 && n.endsWith(\\\".bak\\\")===false && n.endsWith(\\\".patch\\\")===false) fs.cpSync(n,\\\"dist/\\\"+n,{recursive:true});} fs.cpSync(\\\"../admin\\\",\\\"dist/admin\\\",{recursive:true}); console.log(\\\"Build OK — dist + admin statiques préparés pour Vercel\\\")\""
   },
   "engines": {
     "node": ">=18.0.0"
